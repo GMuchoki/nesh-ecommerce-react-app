@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-gray-300;
+  }
+
+  h1 {
+  @apply text-3xl font-extrabold;
+}
+
+}
+
+@layer components {
+  .header-innner {
+    @apply flex items-center justify-between;
+  }
+
+  .logo {
+    @apply text-4xl font-bold text-red-500;
+  }
+
+  .product-grid {
+    @apply grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))];
+  }
+
+  .product-card {
+    @apply bg-white border border-[#e9e9f0] rounded-lg p-3 flex flex-col;
+  }
+}

@@ -1,2 +1,0 @@
-# nesh ecommerce react app
-
