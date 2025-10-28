@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { getProductsById } from "../services/api";
 import Loader from "../components/Loader";
+import { useCart } from "../context/CartContext";
 
 const ProductDetail = () => {
 
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,6 +25,15 @@ const ProductDetail = () => {
 
   if (loading) return <Loader />;
   if (error || !product) return <div className="container">Product Not found.</div>;
+
+  const handleAdd = () => {
+    addToCart({ id: product.id, title: product.title, price: product.price, thumbnail: product.thumbnail }, Number(qty));
+    navigate('/cart');
+  };
+
+  const whatsappNumber = "254700127598";
+  const message = `Hi, I want to order the ${product.title} for Ksh ${product.price} each. Quantity: ${qty}.`;
+  const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
   return (
     <div className="container product-detail">
@@ -40,8 +52,21 @@ const ProductDetail = () => {
             <input type="number" min="1" value={qty} onChange={e => setQty(e.target.value)}/>
           </label>
           <div className="product-action-buttons">
-            <Link to="/checkout" className="btn btn-primary">Checkout</Link>
-            <button className="btn btn-secondary">Add to cart</button>
+            {/* <Link to="/checkout" className="btn btn-primary">Buy now</Link> */}
+            <a
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+            >
+              <img
+                src="https://ik.imagekit.io/aaugzuprk/whatsapp-svgrepo-com%20(1).png?updatedAt=1758664354208"
+                alt="WhatsApp"
+                className="w-5 h-5"
+              />
+              Buy via WhatsApp
+            </a>
+            <button className="btn btn-secondary" onClick={handleAdd}>Add to cart</button>
           </div>
         </div>
       </div>
@@ -50,3 +75,4 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
+
