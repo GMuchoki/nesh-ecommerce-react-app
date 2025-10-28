@@ -38,7 +38,7 @@ const ProductCard = ({ product }) => {
                     <span className="product-stock-info">{product.stock ?? 0} in stock</span>
                 </div>
                 <div className="product-action-buttons">
-                    <Link to="" className="btn btn-primary">Checkout</Link>
+                    <Link to="/checkout" className="btn btn-primary">Checkout</Link>
                     <Link to="" className="btn btn-secondary">Add to cart</Link>
                 </div>
             </div>
