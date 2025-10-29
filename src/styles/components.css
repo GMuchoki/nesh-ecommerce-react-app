@@ -1,0 +1,67 @@
+@layer components {
+  .product-card {
+    @apply bg-white rounded-xl overflow-hidden relative flex flex-col cursor-pointer shadow-sm hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] transition-all duration-300 border border-transparent hover:border-gray-200;
+  }
+
+  .product-thumbnail-container {
+    @apply relative overflow-hidden aspect-square;
+  }
+
+  .product-thumbnail-container img {
+    @apply w-full h-full object-cover transition-transform duration-300 ease-in-out;
+  }
+
+  .product-thumbnail-container:hover img {
+    @apply scale-105;
+  }
+
+  .discount-badge {
+    @apply absolute top-2 left-2 bg-[#ff4757] text-white px-2 py-1 rounded-md text-xs font-semibold;
+  }
+
+  .wishlist-btn {
+    @apply absolute top-2 right-2 bg-[rgba(255,255,255,0.9)] w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-white border border-gray-200 transition;
+  }
+
+  .product-body {
+    @apply p-3 flex flex-col flex-grow;
+  }
+
+  .product-title {
+    @apply text-[14px] sm:text-[15px] text-[#222] mb-2 leading-snug font-semibold line-clamp-2;
+  }
+
+  .product-price-section {
+    @apply flex items-center gap-2 mb-2;
+  }
+
+  .product-current-price {
+    @apply text-[#ff6b35] text-[16px] sm:text-[18px] font-bold;
+  }
+
+  .product-original-price {
+    @apply text-[#999] text-[12px] line-through;
+  }
+
+  .product-rating-section {
+    @apply flex items-center gap-1 mb-3 text-[12px] sm:text-[13px] text-[#666];
+  }
+
+  .product-stock-info {
+    @apply text-[#27ae60] text-[11px] sm:text-[12px] ml-auto;
+  }
+
+  @media (max-width: 640px) {
+    .product-body {
+        @apply p-2;
+    }
+  }
+
+  .loader {
+    @apply p-16 text-center;
+  }
+
+  .empty-cart {
+    @apply text-center p-16;
+  }
+}

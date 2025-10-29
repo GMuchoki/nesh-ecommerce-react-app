@@ -57,16 +57,15 @@ const ProductDetail = () => {
               href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+              className="btn whatsapp-button"
             >
               <img
                 src="https://ik.imagekit.io/aaugzuprk/whatsapp-svgrepo-com%20(1).png?updatedAt=1758664354208"
                 alt="WhatsApp"
-                className="w-5 h-5"
               />
               Buy via WhatsApp
             </a>
-            <button className="btn btn-secondary" onClick={handleAdd}>Add to cart</button>
+            <a className="btn add-to-cart-button" onClick={handleAdd}>Add to cart</a>
           </div>
         </div>
       </div>

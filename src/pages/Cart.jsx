@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Cart = () => {
 
-  const { cart, updateQty, removeFromCart, totalPrice } = useCart();
+  const { cart, updateQty, removeFromCart, clearCart, totalPrice } = useCart();
   const navigate = useNavigate();
 
   if (cart.length === 0) {
@@ -33,7 +33,7 @@ const Cart = () => {
             </div>
             <div className="cart-actions">
               <p>${(item.price * item.qty).toFixed(2)}</p>
-              <button className="btn btn-primary" onClick={() => removeFromCart(item.id)}>Remove</button>
+              <a className="btn remove-item-cart" onClick={() => removeFromCart(item.id)}>Remove</a>
             </div>
           </div>
         ))}
@@ -42,7 +42,10 @@ const Cart = () => {
       <aside className="cart-summary">
         <h3>Summary</h3>
         <p>Total: <strong>${totalPrice.toFixed(2)}</strong></p>
-        <button className="btn btn-primary" onClick={() => navigate('/checkout')}>Proceed to Checkout</button>
+        <div className="cart-summary-action-btns">
+          <a className="btn btn-primary" onClick={() => navigate('/checkout')}>Proceed to Checkout</a>
+          <a className="btn btn-secondary" onClick={clearCart}>Clear Cart</a>
+        </div>
       </aside>
     </div>
   );

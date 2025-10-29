@@ -1,0 +1,135 @@
+@layer components {
+  .product-detail {
+    @apply grid gap-6 md:grid-cols-2 items-start;
+  }
+
+  .detail-left {
+    @apply flex justify-center;
+  }
+
+  .detail-thumb {
+    @apply w-full max-w-[420px] rounded-lg object-cover;
+  }
+
+    .detail-right {
+    @apply flex flex-col gap-3;
+    }
+
+  .muted {
+    @apply text-[#666];
+  }
+
+  .price {
+    @apply text-[1.5rem] font-bold;
+  }
+
+  .actions {
+    @apply flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-4;
+  }
+
+  .actions label {
+    @apply flex items-center gap-2 text-sm text-gray-700;
+  }
+
+  .actions input {
+    @apply w-20 border border-gray-300 rounded px-2 py-1;
+  }
+
+  .product-action-buttons {
+    @apply flex flex-col sm:flex-row gap-3 w-full;
+  }
+
+  .btn {
+    @apply flex items-center justify-center px-4 py-2 rounded text-[13px] font-semibold cursor-pointer no-underline transition-all duration-200;
+  }
+
+  .whatsapp-button {
+    @apply bg-green-600 text-white hover:bg-green-700 transition;
+  }
+
+  .whatsapp-button img {
+    @apply w-5 h-5 mr-2;
+  }
+
+  .add-to-cart-button {
+    @apply bg-transparent text-[#333] border border-[#ddd] hover:bg-[#f8f9fa] hover:border-[#333];
+  }
+
+  .cart-page {
+    @apply grid gap-6 md:grid-cols-[2fr_2fr] items-start;
+  }
+
+  .cart-item {
+    @apply flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white border border-[#e9e9f0]
+          p-4 rounded-md;
+  }
+
+  .cart-thumb {
+    @apply w-full sm:w-24 h-auto sm:h-24 object-cover rounded-md;
+  }
+
+  .cart-meta {
+    @apply flex flex-col gap-2 flex-1;
+  }
+
+  .cart-meta input {
+    @apply w-16 border border-gray-300 rounded px-2 py-1;
+  }
+
+  .remove-item-cart {
+    @apply bg-[#333] text-white text-sm px-3 py-2 rounded hover:bg-black transition;
+  }
+
+  .cart-actions {
+    @apply flex flex-col items-start gap-2 sm:ml-auto;
+  }
+
+  .cart-summary {
+    @apply bg-white border border-[#e9e9f0] p-4 rounded-md h-fit md:sticky md:top-4;
+  }
+
+  .cart-summary-action-btns {
+    @apply flex flex-col gap-2;
+  }
+
+  .btn-primary {
+    @apply bg-[#333] text-white hover:bg-black;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-[#333] border border-[#ddd] hover:bg-[#f8f9fa] hover:border-[#333];
+  }
+
+  .checkout-page .checkout-item {
+    @apply flex justify-between py-2;
+  }
+
+  .wishlist-page {
+    @apply py-6;
+  }
+
+  .wishlist-grid {
+    @apply grid gap-4 grid-cols-[repeat(auto-fill,minmax(250px,1fr))] mt-4;
+  }
+
+  .wishlist-item {
+    @apply bg-white border border-[#e9e9f0] p-4 rounded-md flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  .wishlist-thumb {
+    @apply w-full h-40 object-contain rounded-md mb-3 bg-[#f9f9f9];
+  }
+
+  .wishlist-info h3 {
+    @apply text-[15px] font-semibold mb-1 line-clamp-2;
+  }
+
+  .wishlist-info p {
+    @apply text-[#ff6b35] font-bold mb-3;
+  }
+
+  .wishlist-actions {
+    @apply flex gap-2 w-full;
+  }
+
+}
