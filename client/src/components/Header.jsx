@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { Menu, X } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { Menu, X, User, LogOut } from "lucide-react";
 
 const Header = () => {
 
     const { itemCount } = useCart();
+    const { user, profile, logout } = useAuth();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const toggleMenu = () => setMenuOpen(!menuOpen);
@@ -39,6 +41,20 @@ const Header = () => {
                 <Link to="/cart" onClick={() => setMenuOpen(false)}>
                     Cart ({itemCount})
                 </Link>
+                {user ? (
+                    <>
+                        {profile?.role === 'salesperson' && (
+                           <Link to="/pos" className="text-blue-500 font-semibold" onClick={() => setMenuOpen(false)}>POS Terminal</Link> 
+                        )}
+                        <button onClick={() => { logout(); setMenuOpen(false); }} className="flex items-center gap-1 text-gray-600 hover:text-red-500 transition-colors mx-0 px-0 bg-transparent border-0 font-medium">
+                            <LogOut size={16} /> Logout
+                        </button>
+                    </>
+                ) : (
+                    <Link to="/login" onClick={() => setMenuOpen(false)} className="flex items-center gap-1 bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors text-sm font-semibold !text-white hover:!text-white border-0 shadow-sm ml-0 sm:ml-2">
+                        <User size={16} /> Sign In
+                    </Link>
+                )}
                 </nav>
 
 {/*                 <nav className="header-nav">
