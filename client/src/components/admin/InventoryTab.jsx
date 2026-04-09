@@ -4,7 +4,7 @@ import { insertProduct, updateProduct, deleteProduct } from "../../services/api"
 import { toast } from "sonner";
 import { Search, Database, Edit2, Trash2, Plus, X } from "lucide-react";
 
-export default function InventoryTab({ products = [], isLoading }) {
+export default function InventoryTab({ products = [], brands = [], isLoading }) {
     const queryClient = useQueryClient();
     const [search, setSearch] = useState("");
     
@@ -12,7 +12,7 @@ export default function InventoryTab({ products = [], isLoading }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [newProduct, setNewProduct] = useState({
-        name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0
+        name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: ""
     });
 
     const saveMutation = useMutation({
@@ -54,7 +54,8 @@ export default function InventoryTab({ products = [], isLoading }) {
         setNewProduct({
             name: product.name || "", category: product.category || "", price: product.price || "",
             stock_quantity: product.stock_quantity || "", image_url: product.image_url || "",
-            description: product.description || "", discount_percentage: product.discount_percentage || 0, sales_count: product.sales_count || 0
+            description: product.description || "", discount_percentage: product.discount_percentage || 0, sales_count: product.sales_count || 0,
+            brand: product.brand || "", specifications: product.specifications || ""
         });
         setIsModalOpen(true);
     };
@@ -77,7 +78,7 @@ export default function InventoryTab({ products = [], isLoading }) {
                     <button 
                         onClick={() => {
                             setEditingId(null);
-                            setNewProduct({ name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0 });
+                            setNewProduct({ name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: "" });
                             setIsModalOpen(true);
                         }}
                         className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-transform hover:scale-105 shadow-md shadow-red-600/20 whitespace-nowrap"
@@ -145,11 +146,21 @@ export default function InventoryTab({ products = [], isLoading }) {
                         <div className="p-6 overflow-y-auto flex-1">
                             <form id="add-product-form" onSubmit={handleSaveProduct} className="space-y-5">
                                 <div><label className="block text-sm font-semibold text-slate-700 mb-1">Product Name *</label><input required type="text" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div>
-                                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-semibold text-slate-700 mb-1">Category *</label><input required type="text" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div><div><label className="block text-sm font-semibold text-slate-700 mb-1">Price ($) *</label><input required type="number" step="0.01" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div></div>
-                                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-semibold text-slate-700 mb-1">Initial Stock *</label><input required type="number" value={newProduct.stock_quantity} onChange={e => setNewProduct({...newProduct, stock_quantity: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div><div><label className="block text-sm font-semibold text-slate-700 mb-1">Discount %</label><input type="number" value={newProduct.discount_percentage} onChange={e => setNewProduct({...newProduct, discount_percentage: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div></div>
-                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Total Sales Override (Optional)</label><input type="number" value={newProduct.sales_count} onChange={e => setNewProduct({...newProduct, sales_count: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" placeholder="Use this to spoof startup sales..." /></div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div><label className="block text-sm font-semibold text-slate-700 mb-1">Category *</label><input required type="text" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1">Brand Name / Manufacturer</label>
+                                        <select value={newProduct.brand} onChange={e => setNewProduct({...newProduct, brand: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-white">
+                                            <option value="">-- No Brand --</option>
+                                            {brands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-semibold text-slate-700 mb-1">Price ($) *</label><input required type="number" step="0.01" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div><div><label className="block text-sm font-semibold text-slate-700 mb-1">Initial Stock *</label><input required type="number" value={newProduct.stock_quantity} onChange={e => setNewProduct({...newProduct, stock_quantity: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div></div>
+                                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-semibold text-slate-700 mb-1">Discount %</label><input type="number" value={newProduct.discount_percentage} onChange={e => setNewProduct({...newProduct, discount_percentage: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div><div><label className="block text-sm font-semibold text-slate-700 mb-1">Total Sales Override (Optional)</label><input type="number" value={newProduct.sales_count} onChange={e => setNewProduct({...newProduct, sales_count: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" placeholder="Use this to spoof startup sales..." /></div></div>
                                 <div><label className="block text-sm font-semibold text-slate-700 mb-1">Image URL</label><input type="url" value={newProduct.image_url} onChange={e => setNewProduct({...newProduct, image_url: e.target.value})} placeholder="https://..." className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div>
                                 <div><label className="block text-sm font-semibold text-slate-700 mb-1">Description</label><textarea value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} rows="3" className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500"></textarea></div>
+                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Specifications (Format as bullet points)</label><textarea value={newProduct.specifications} onChange={e => setNewProduct({...newProduct, specifications: e.target.value})} rows="3" className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" placeholder="- Material: Leather&#10;- Weight: 250g&#10;- Warranty: 1 Year"></textarea></div>
                             </form>
                         </div>
                         <div className="p-6 border-t border-slate-100 flex justify-end gap-3 shrink-0 bg-slate-50"><button onClick={() => setIsModalOpen(false)} type="button" className="px-5 py-2.5 text-slate-600 font-semibold hover:bg-slate-200 rounded-lg transition-colors">Cancel</button><button type="submit" form="add-product-form" disabled={saveMutation.isPending} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2">{saveMutation.isPending ? "Saving..." : (editingId ? "Update Product" : "Save Product")}</button></div>

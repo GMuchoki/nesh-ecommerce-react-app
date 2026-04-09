@@ -187,3 +187,30 @@ export async function getCustomers() {
     }
     return data || [];
 }
+
+export async function getBrands() {
+    const { data, error } = await supabase.from('brands').select('*').order('name', { ascending: true });
+    if (error) {
+        console.error("Error fetching brands:", error);
+        return [];
+    }
+    return data || [];
+}
+
+export async function insertBrand(brandData) {
+    const { data, error } = await supabase.from('brands').insert([brandData]).select().single();
+    if (error) throw error;
+    return data;
+}
+
+export async function updateBrand(id, brandData) {
+    const { data, error } = await supabase.from('brands').update(brandData).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+}
+
+export async function deleteBrand(id) {
+    const { error } = await supabase.from('brands').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+}

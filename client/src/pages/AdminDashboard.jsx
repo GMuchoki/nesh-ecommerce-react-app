@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
-import { getProducts, getAllOrders, getCustomers } from "../services/api";
+import { getProducts, getAllOrders, getCustomers, getBrands } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ShieldCheck, TrendingUp, Users, ShoppingBag, Box } from "lucide-react";
+import { ShieldCheck, TrendingUp, Users, ShoppingBag, Box, Tags } from "lucide-react";
 
 import AnalyticsTab from "../components/admin/AnalyticsTab";
 import OrdersTab from "../components/admin/OrdersTab";
 import CRMTab from "../components/admin/CRMTab";
 import InventoryTab from "../components/admin/InventoryTab";
+import BrandsTab from "../components/admin/BrandsTab";
 
 const AdminDashboard = () => {
     const { profile } = useAuth();
@@ -22,6 +23,7 @@ const AdminDashboard = () => {
     const { data: products = [], isLoading: productsLoading } = useQuery({ queryKey: ['products'], queryFn: () => getProducts() });
     const { data: orders = [], isLoading: ordersLoading } = useQuery({ queryKey: ['admin_orders'], queryFn: () => getAllOrders() });
     const { data: customers = [], isLoading: customersLoading } = useQuery({ queryKey: ['admin_customers'], queryFn: () => getCustomers() });
+    const { data: brands = [], isLoading: brandsLoading } = useQuery({ queryKey: ['brands'], queryFn: () => getBrands() });
 
     // Guard: redirect non-admins safely
     useEffect(() => {
@@ -56,6 +58,7 @@ const AdminDashboard = () => {
                         { id: 'analytics', label: 'Analytics', icon: TrendingUp },
                         { id: 'orders', label: 'Fulfillment', icon: ShoppingBag },
                         { id: 'inventory', label: 'Inventory', icon: Box },
+                        { id: 'brands', label: 'Brands', icon: Tags },
                         { id: 'customers', label: 'CRM / Customers', icon: Users }
                     ].map(tab => (
                         <button
@@ -74,7 +77,8 @@ const AdminDashboard = () => {
                 {activeTab === 'analytics' && <AnalyticsTab orders={orders} customers={customers} products={products} />}
                 {activeTab === 'orders' && <OrdersTab orders={orders} isLoading={ordersLoading} />}
                 {activeTab === 'customers' && <CRMTab customers={customers} isLoading={customersLoading} />}
-                {activeTab === 'inventory' && <InventoryTab products={products} isLoading={productsLoading} />}
+                {activeTab === 'inventory' && <InventoryTab products={products} isLoading={productsLoading} brands={brands} />}
+                {activeTab === 'brands' && <BrandsTab brands={brands} isLoading={brandsLoading} />}
 
             </div>
         </div>

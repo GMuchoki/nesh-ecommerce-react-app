@@ -125,6 +125,7 @@ const ProductDetail = () => {
 
           {/* Center: Product Information & Purchase Area */}
           <div className="lg:w-5/12 flex flex-col">
+            {product.brand && <div className="text-sm font-bold text-red-600 tracking-wider uppercase mb-1">{product.brand}</div>}
             <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 leading-snug mb-3">
                 {product.name}
             </h1>
@@ -305,32 +306,34 @@ const ProductDetail = () => {
             {activeTab === 'specifications' && (
                 <div className="max-w-4xl py-4 animation-fadeIn">
                     <h3 className="text-xl font-bold text-slate-800 mb-6">Technical Details</h3>
-                    <div className="border border-slate-200 rounded-xl overflow-hidden">
-                        <table className="w-full text-sm text-left">
-                            <tbody className="divide-y divide-slate-200">
-                                <tr className="bg-slate-50">
-                                    <td className="px-6 py-4 font-semibold text-slate-600 w-1/3">Item Category</td>
-                                    <td className="px-6 py-4 text-slate-800 capitalize">{product.category}</td>
-                                </tr>
-                                <tr>
-                                    <td className="px-6 py-4 font-semibold text-slate-600">Material</td>
-                                    <td className="px-6 py-4 text-slate-800">Premium High-Durability Components</td>
-                                </tr>
-                                <tr className="bg-slate-50">
-                                    <td className="px-6 py-4 font-semibold text-slate-600">Features</td>
-                                    <td className="px-6 py-4 text-slate-800 text-sm">Anti-Scratch, Lightweight, Premium Build</td>
-                                </tr>
-                                <tr>
-                                    <td className="px-6 py-4 font-semibold text-slate-600">Brand Quality</td>
-                                    <td className="px-6 py-4 text-slate-800">NeshStore Verified Original</td>
-                                </tr>
-                                <tr className="bg-slate-50">
-                                    <td className="px-6 py-4 font-semibold text-slate-600">Package Included</td>
-                                    <td className="px-6 py-4 text-slate-800">Original Packaging x1, Instructions Manual</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    {product.specifications ? (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+                            <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{product.specifications}</p>
+                        </div>
+                    ) : (
+                        <div className="border border-slate-200 rounded-xl overflow-hidden">
+                            <table className="w-full text-sm text-left">
+                                <tbody className="divide-y divide-slate-200">
+                                    <tr className="bg-slate-50">
+                                        <td className="px-6 py-4 font-semibold text-slate-600 w-1/3">Item Category</td>
+                                        <td className="px-6 py-4 text-slate-800 capitalize">{product.category}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-6 py-4 font-semibold text-slate-600">Material</td>
+                                        <td className="px-6 py-4 text-slate-800">Premium High-Durability Components</td>
+                                    </tr>
+                                    <tr className="bg-slate-50">
+                                        <td className="px-6 py-4 font-semibold text-slate-600">Features</td>
+                                        <td className="px-6 py-4 text-slate-800 text-sm">Anti-Scratch, Lightweight, Premium Build</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="px-6 py-4 font-semibold text-slate-600">Brand Quality</td>
+                                        <td className="px-6 py-4 text-slate-800">{product.brand || 'NeshStore Verified Original'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             )}
 
