@@ -32,7 +32,7 @@ const Wishlist = () => {
             <img src={product.image_url || product.thumbnail} alt={product.name || product.title} className="wishlist-thumb" />
             <div className="wishlist-info">
               <h3>{product.name || product.title}</h3>
-              <p>${product.price}</p>
+              <p>Ksh {product.price}</p>
             </div>
             <div className="wishlist-actions">
               <button

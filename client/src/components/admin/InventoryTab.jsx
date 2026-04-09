@@ -12,7 +12,7 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [newProduct, setNewProduct] = useState({
-        name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: ""
+        name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: "", variants: []
     });
 
     const saveMutation = useMutation({
@@ -55,7 +55,7 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
             name: product.name || "", category: product.category || "", price: product.price || "",
             stock_quantity: product.stock_quantity || "", image_url: product.image_url || "",
             description: product.description || "", discount_percentage: product.discount_percentage || 0, sales_count: product.sales_count || 0,
-            brand: product.brand || "", specifications: product.specifications || ""
+            brand: product.brand || "", specifications: product.specifications || "", variants: product.variants || []
         });
         setIsModalOpen(true);
     };
@@ -63,6 +63,26 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
     const handleDeleteClick = async (id) => {
         if (!window.confirm("Are you sure you want to permanently delete this product?")) return;
         deleteMutation.mutate(id);
+    };
+
+    const handleAddVariant = () => {
+        setNewProduct(prev => ({
+            ...prev,
+            variants: [...(prev.variants || []), { name: "", price: prev.price || 0, stock_quantity: 0, image_url: "" }]
+        }));
+    };
+
+    const handleVariantChange = (index, field, value) => {
+        const updated = [...(newProduct.variants || [])];
+        if (field === 'price') updated[index][field] = parseFloat(value) || 0;
+        else if (field === 'stock_quantity') updated[index][field] = parseInt(value, 10) || 0;
+        else updated[index][field] = value;
+        setNewProduct({ ...newProduct, variants: updated });
+    };
+
+    const handleRemoveVariant = (index) => {
+        const updated = (newProduct.variants || []).filter((_, i) => i !== index);
+        setNewProduct({ ...newProduct, variants: updated });
     };
 
     return (
@@ -78,7 +98,7 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
                     <button 
                         onClick={() => {
                             setEditingId(null);
-                            setNewProduct({ name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: "" });
+                            setNewProduct({ name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: "", variants: [] });
                             setIsModalOpen(true);
                         }}
                         className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-transform hover:scale-105 shadow-md shadow-red-600/20 whitespace-nowrap"
@@ -117,7 +137,7 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
                                         </div>
                                     </td>
                                     <td className="p-4 text-slate-600 capitalize">{product.category || 'Uncategorized'}</td>
-                                    <td className="p-4 font-semibold text-slate-800">${(product.price || 0).toFixed(2)}</td>
+                                    <td className="p-4 font-semibold text-slate-800">Ksh {(product.price || 0).toFixed(2)}</td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded-md text-xs font-bold ${product.stock_quantity > 10 ? 'bg-green-100 text-green-700' : product.stock_quantity > 0 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
                                             {product.stock_quantity}
@@ -156,11 +176,32 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
                                         </select>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-semibold text-slate-700 mb-1">Price ($) *</label><input required type="number" step="0.01" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div><div><label className="block text-sm font-semibold text-slate-700 mb-1">Initial Stock *</label><input required type="number" value={newProduct.stock_quantity} onChange={e => setNewProduct({...newProduct, stock_quantity: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div></div>
+                                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-semibold text-slate-700 mb-1">Price (Ksh) *</label><input required type="number" step="0.01" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div><div><label className="block text-sm font-semibold text-slate-700 mb-1">Initial Stock *</label><input required type="number" value={newProduct.stock_quantity} onChange={e => setNewProduct({...newProduct, stock_quantity: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div></div>
                                 <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-semibold text-slate-700 mb-1">Discount %</label><input type="number" value={newProduct.discount_percentage} onChange={e => setNewProduct({...newProduct, discount_percentage: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div><div><label className="block text-sm font-semibold text-slate-700 mb-1">Total Sales Override (Optional)</label><input type="number" value={newProduct.sales_count} onChange={e => setNewProduct({...newProduct, sales_count: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" placeholder="Use this to spoof startup sales..." /></div></div>
                                 <div><label className="block text-sm font-semibold text-slate-700 mb-1">Image URL</label><input type="url" value={newProduct.image_url} onChange={e => setNewProduct({...newProduct, image_url: e.target.value})} placeholder="https://..." className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div>
                                 <div><label className="block text-sm font-semibold text-slate-700 mb-1">Description</label><textarea value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} rows="3" className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500"></textarea></div>
                                 <div><label className="block text-sm font-semibold text-slate-700 mb-1">Specifications (Format as bullet points)</label><textarea value={newProduct.specifications} onChange={e => setNewProduct({...newProduct, specifications: e.target.value})} rows="3" className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" placeholder="- Material: Leather&#10;- Weight: 250g&#10;- Warranty: 1 Year"></textarea></div>
+
+                                <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                                    <div className="flex justify-between items-center p-3 border-b border-slate-200 bg-slate-100">
+                                        <h3 className="font-bold text-slate-700 text-sm">Product Variants</h3>
+                                        <button type="button" onClick={handleAddVariant} className="text-xs font-bold bg-white border border-slate-300 rounded px-2 py-1 text-slate-600 hover:text-red-600 flex items-center gap-1"><Plus size={12}/> Add Option</button>
+                                    </div>
+                                    <div className="p-3 space-y-3">
+                                        {!(newProduct.variants?.length > 0) && <p className="text-xs text-slate-400 italic text-center py-2">No variants created. Product will be sold as a single standard item.</p>}
+                                        {(newProduct.variants || []).map((v, i) => (
+                                            <div key={i} className="flex flex-col gap-2 p-3 bg-white border border-slate-200 rounded-lg shadow-sm relative">
+                                                <button type="button" onClick={() => handleRemoveVariant(i)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500"><X size={14}/></button>
+                                                <div className="grid grid-cols-3 gap-2 pr-6">
+                                                    <div><label className="block text-[10px] font-bold text-slate-500 uppercase">Option Name</label><input type="text" placeholder="e.g. Matte Black" value={v.name} onChange={e => handleVariantChange(i, 'name', e.target.value)} className="w-full p-1.5 text-xs border rounded focus:ring-1 focus:ring-red-500 outline-none" required /></div>
+                                                    <div><label className="block text-[10px] font-bold text-slate-500 uppercase">Price (Ksh)</label><input type="number" step="0.01" value={v.price} onChange={e => handleVariantChange(i, 'price', e.target.value)} className="w-full p-1.5 text-xs border rounded focus:ring-1 focus:ring-red-500 outline-none" required /></div>
+                                                    <div><label className="block text-[10px] font-bold text-slate-500 uppercase">Stock</label><input type="number" value={v.stock_quantity} onChange={e => handleVariantChange(i, 'stock_quantity', e.target.value)} className="w-full p-1.5 text-xs border rounded focus:ring-1 focus:ring-red-500 outline-none" required /></div>
+                                                </div>
+                                                <div><label className="block text-[10px] font-bold text-slate-500 uppercase">Specific Image URL (Optional)</label><input type="url" placeholder="https://..." value={v.image_url} onChange={e => handleVariantChange(i, 'image_url', e.target.value)} className="w-full p-1.5 text-xs border rounded focus:ring-1 focus:ring-red-500 outline-none" /></div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </form>
                         </div>
                         <div className="p-6 border-t border-slate-100 flex justify-end gap-3 shrink-0 bg-slate-50"><button onClick={() => setIsModalOpen(false)} type="button" className="px-5 py-2.5 text-slate-600 font-semibold hover:bg-slate-200 rounded-lg transition-colors">Cancel</button><button type="submit" form="add-product-form" disabled={saveMutation.isPending} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2">{saveMutation.isPending ? "Saving..." : (editingId ? "Update Product" : "Save Product")}</button></div>

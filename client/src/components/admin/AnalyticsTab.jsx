@@ -15,7 +15,7 @@ export default function AnalyticsTab({ orders = [], customers = [], products = [
                     </div>
                     <div>
                         <h3 className="text-slate-500 font-semibold mb-1">Gross Revenue</h3>
-                        <p className="text-3xl font-black text-slate-900">${totalRevenue.toFixed(2)}</p>
+                        <p className="text-3xl font-black text-slate-900">Ksh {totalRevenue.toFixed(2)}</p>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
@@ -67,7 +67,7 @@ export default function AnalyticsTab({ orders = [], customers = [], products = [
                                     <td className="py-4 font-mono text-xs text-slate-400">{order.id.split('-')[0]}...</td>
                                     <td className="py-4 text-slate-700">{new Date(order.created_at).toLocaleDateString()}</td>
                                     <td className="py-4 text-slate-700">{order.profiles?.full_name || order.guest_email || 'Guest Walk-in'}</td>
-                                    <td className="py-4 font-bold text-slate-800">${order.total_amount}</td>
+                                    <td className="py-4 font-bold text-slate-800">Ksh {order.total_amount}</td>
                                     <td className="py-4">
                                         <span className={`px-2 py-1 rounded text-xs font-black uppercase ${order.status === 'delivered' ? 'bg-green-100 text-green-700' : order.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
                                             {order.status || 'pending'}

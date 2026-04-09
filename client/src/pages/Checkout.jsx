@@ -28,7 +28,7 @@ const Checkout = () => {
             customer_id: user?.id || null, 
             guest_email: guestEmail,
             total_amount: totalPrice,
-            status: 'completed'
+            status: 'pending'
         }, cart);
 
         // INVALIDATE CACHE so the homepage forces a background refresh and shows the updated stock!
@@ -105,13 +105,13 @@ const Checkout = () => {
                         <span className="font-medium text-slate-700">{item.name || item.title}</span>
                         <span className="text-xs text-slate-400 bg-slate-100 px-2 rounded-md">Qty: {item.qty}</span>
                     </div>
-                    <span className="font-semibold">${(item.price * item.qty).toFixed(2)}</span>
+                    <span className="font-semibold">Ksh {(item.price * item.qty).toFixed(2)}</span>
                 </div>
                 ))}
             </div>
             <div className="border-t border-slate-100 pt-4 flex justify-between items-center">
                 <span className="text-slate-500">Subtotal</span>
-                <span className="text-2xl font-bold text-slate-900">${totalPrice.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-slate-900">Ksh {totalPrice.toFixed(2)}</span>
             </div>
         </div>
 
@@ -135,7 +135,7 @@ const Checkout = () => {
                 disabled={processing || cart.length === 0}
                 className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-500/30 text-lg"
             >
-                {processing ? 'Processing...' : `Pay $${totalPrice.toFixed(2)}`}
+                {processing ? 'Processing...' : `Pay Ksh ${totalPrice.toFixed(2)}`}
             </button>
             <p className="text-center text-xs text-slate-400 mt-4 flex items-center justify-center gap-1">
                 Payments processed securely.

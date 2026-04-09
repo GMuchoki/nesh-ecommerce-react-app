@@ -70,7 +70,8 @@ const PosTerminal = () => {
                 customer_id: user.id, // Salesperson ringing it up
                 guest_email: customerEmail || "walk-in@store.local",
                 total_amount: total,
-                status: 'completed'
+                pos_walkin: true,
+                status: 'delivered'
             }, cart);
             
             // Invalidate global products cache so the web store sees the updated stock
@@ -151,7 +152,7 @@ const PosTerminal = () => {
                                     </div>
                                     <h3 className="font-semibold text-slate-800 text-sm line-clamp-2 leading-tight flex-1">{product.name}</h3>
                                     <div className="mt-2 flex justify-between items-end w-full">
-                                        <span className="font-bold text-red-600">${product.price}</span>
+                                        <span className="font-bold text-red-600">Ksh {product.price}</span>
                                         <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-md">Stock: {product.stock_quantity ?? 0}</span>
                                     </div>
                                 </button>
@@ -193,7 +194,7 @@ const PosTerminal = () => {
                                                 </button>
                                             </div>
                                             <div className="flex justify-between items-center mt-2">
-                                                <span className="font-bold text-slate-800">${(item.price * item.qty).toFixed(2)}</span>
+                                                <span className="font-bold text-slate-800">Ksh {(item.price * item.qty).toFixed(2)}</span>
                                                 
                                                 {/* Qty Controls */}
                                                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg p-1">
@@ -224,7 +225,7 @@ const PosTerminal = () => {
 
                         <div className="flex justify-between items-center mb-6">
                             <span className="text-slate-500 font-medium">Total Balance</span>
-                            <span className="text-3xl font-bold text-slate-900">${total.toFixed(2)}</span>
+                            <span className="text-3xl font-bold text-slate-900">Ksh {total.toFixed(2)}</span>
                         </div>
 
                         <button 

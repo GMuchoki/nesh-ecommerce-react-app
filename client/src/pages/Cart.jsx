@@ -25,14 +25,14 @@ const Cart = () => {
             <img src={item.image_url || item.thumbnail} alt={item.name || item.title} className="cart-thumb" />
             <div className="cart-meta">
               <h3>{item.name || item.title}</h3>
-              <p>${item.price} each</p>
+              <p>Ksh {item.price} each</p>
               <label>
                 Qty
                 <input type="number" min="1" value={item.qty} onChange={e => updateQty(item.id, Number(e.target.value))} />
               </label>
             </div>
             <div className="cart-actions">
-              <p>${(item.price * item.qty).toFixed(2)}</p>
+              <p>Ksh {(item.price * item.qty).toFixed(2)}</p>
               <a className="btn remove-item-cart" onClick={() => removeFromCart(item.id)}>Remove</a>
             </div>
           </div>
@@ -41,7 +41,7 @@ const Cart = () => {
 
       <aside className="cart-summary">
         <h3>Summary</h3>
-        <p>Total: <strong>${totalPrice.toFixed(2)}</strong></p>
+        <p>Total: <strong>Ksh {totalPrice.toFixed(2)}</strong></p>
         <div className="cart-summary-action-btns">
           <a className="btn btn-primary" onClick={() => navigate('/checkout')}>Proceed to Checkout</a>
           <a className="btn btn-secondary" onClick={clearCart}>Clear Cart</a>

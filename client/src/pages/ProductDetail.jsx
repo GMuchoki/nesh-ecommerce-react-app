@@ -17,7 +17,7 @@ const ProductDetail = () => {
 
   // Component State
   const [qty, setQty] = useState(1);
-  const [selectedColor, setSelectedColor] = useState("Clear");
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [activeTab, setActiveTab] = useState("reviews");
   
   const [rating, setRating] = useState(5);
@@ -39,6 +39,16 @@ const ProductDetail = () => {
     enabled: !!product?.category
   });
 
+  React.useEffect(() => {
+    if (product?.variants?.length > 0 && !selectedVariant) {
+        setSelectedVariant(product.variants[0]);
+    }
+  }, [product, selectedVariant]);
+
+  const activePrice = selectedVariant?.price || product?.price || 0;
+  const activeStock = selectedVariant?.stock_quantity ?? product?.stock_quantity ?? 0;
+  const activeImage = selectedVariant?.image_url || product?.image_url;
+
   const reviewMutation = useMutation({
     mutationFn: submitReview,
     onSuccess: () => {
@@ -57,17 +67,17 @@ const ProductDetail = () => {
   if (isError || !product) return <div className="container py-20 text-center font-bold text-slate-500">Product Not found.</div>;
 
   const handleAdd = () => {
-    addToCart({ id: product.id, title: product.name, price: product.price, thumbnail: product.image_url, variant: selectedColor }, Number(qty));
+    addToCart({ id: product.id, title: product.name, price: activePrice, thumbnail: activeImage, variant: selectedVariant?.name || null }, Number(qty));
     navigate('/cart');
   };
   
   const handleBuyNow = () => {
-    addToCart({ id: product.id, title: product.name, price: product.price, thumbnail: product.image_url, variant: selectedColor }, Number(qty));
+    addToCart({ id: product.id, title: product.name, price: activePrice, thumbnail: activeImage, variant: selectedVariant?.name || null }, Number(qty));
     navigate('/checkout'); // Assuming a fast direct guest checkout route
   }
 
   const whatsappNumber = "254700127598";
-  const message = `Hi, I want to order the ${product.name} for Ksh ${product.price} each. Quantity: ${qty}.`;
+  const message = `Hi, I want to order the ${product?.name} ${selectedVariant ? `(${selectedVariant.name})` : ''} for Ksh ${activePrice} each. Quantity: ${qty}.`;
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
   const handleReviewSubmit = async (e) => {
@@ -81,12 +91,7 @@ const ProductDetail = () => {
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) 
     : "5.0";
 
-  // MOCK DATA for AliExpress clone layout
-  const mockColors = [
-      { name: "Clear", hex: "#f0f0f0" },
-      { name: "Matte Black", hex: "#222222" },
-      { name: "Titanium Gray", hex: "#7a7a7a" }
-  ];
+  const productVariants = product?.variants || [];
 
   return (
     <div className="min-h-screen pb-12">
@@ -109,17 +114,17 @@ const ProductDetail = () => {
               {/* Thumbnail strip mockup */}
               <div className="hidden md:flex flex-col gap-2 w-16 shrink-0">
                   <div className="w-16 h-16 rounded-md border-2 border-red-500 p-1 flex items-center justify-center overflow-hidden cursor-pointer">
-                      <img src={product.image_url} alt="thumb" className="w-full h-full object-cover" />
+                      <img src={activeImage} alt="thumb" className="w-full h-full object-cover" />
                   </div>
                   {[2, 3, 4].map(idx => (
                       <div key={idx} className="w-16 h-16 rounded-md border border-slate-200 hover:border-slate-400 bg-slate-50 overflow-hidden cursor-pointer opacity-70 hover:opacity-100 transition-all">
-                           <img src={product.image_url} alt={`alt-${idx}`} className="w-full h-full object-cover mix-blend-multiply" />
+                           <img src={activeImage} alt={`alt-${idx}`} className="w-full h-full object-cover mix-blend-multiply" />
                       </div>
                   ))}
               </div>
               {/* Main Image */}
               <div className="bg-slate-50 rounded-xl flex-1 aspect-square md:aspect-auto md:h-[600px] flex items-center justify-center p-4 border border-slate-100 overflow-hidden">
-                <img src={product.image_url} alt={product.name} className="max-w-full max-h-full object-contain hover:scale-110 transition-transform duration-500 cursor-zoom-in" />
+                <img src={activeImage} alt={product.name} className="max-w-full max-h-full object-contain hover:scale-110 transition-transform duration-500 cursor-zoom-in" />
               </div>
           </div>
 
@@ -144,34 +149,36 @@ const ProductDetail = () => {
             
             <div className="bg-orange-50/50 rounded-xl p-4 mb-6 border border-orange-100">
                 <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-3xl lg:text-4xl font-black text-red-600">${product.price.toFixed(2)}</span>
+                    <span className="text-3xl lg:text-4xl font-black text-red-600">Ksh {Number(activePrice).toFixed(2)}</span>
                     {product.discount_percentage > 0 && (
                         <span className="text-sm text-slate-400 line-through">
-                            ${(product.price / (1 - product.discount_percentage/100)).toFixed(2)}
+                            ${(activePrice / (1 - product.discount_percentage/100)).toFixed(2)}
                         </span>
                     )}
                 </div>
                 <div className="text-sm text-slate-500">Tax excluded, add at checkout if applicable</div>
             </div>
 
-            {/* Visual Color Picker */}
-            <div className="mb-6">
-                <div className="text-sm font-semibold text-slate-800 mb-3">
-                    Color: <span className="text-slate-600 font-normal">{selectedColor}</span>
+            {/* Dynamic Variant Picker */}
+            {productVariants.length > 0 && (
+                <div className="mb-6">
+                    <div className="text-sm font-semibold text-slate-800 mb-3">
+                        Variant: <span className="text-slate-600 font-normal">{selectedVariant?.name}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {productVariants.map((variant, idx) => (
+                            <button 
+                                key={idx}
+                                onClick={() => setSelectedVariant(variant)}
+                                className={`px-4 py-2 rounded-lg border-2 flex items-center gap-2 transition-all ${selectedVariant?.name === variant.name ? 'border-red-500 bg-red-50 text-red-700 shadow-sm' : 'border-slate-200 text-slate-600 hover:border-slate-400 bg-white'}`}
+                            >
+                                {variant.image_url && <img src={variant.image_url} className="w-5 h-5 object-cover rounded-md" alt={variant.name} />}
+                                <span className="font-semibold text-sm">{variant.name}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                <div className="flex gap-3">
-                    {mockColors.map(color => (
-                        <button 
-                            key={color.name}
-                            onClick={() => setSelectedColor(color.name)}
-                            className={`w-14 h-14 rounded-lg border-2 flex flex-col items-center justify-center p-1 relative overflow-hidden transition-all ${selectedColor === color.name ? 'border-red-500 shadow-sm' : 'border-slate-200 hover:border-slate-400'}`}
-                        >
-                            <img src={product.image_url} className="w-8 h-8 object-contain mix-blend-multiply opacity-80" alt={color.name} />
-                            <div className="absolute inset-0 opacity-20" style={{backgroundColor: color.hex}}></div>
-                        </button>
-                    ))}
-                </div>
-            </div>
+            )}
 
             <div className="border-t border-dotted border-slate-300 py-6 mb-6">
                 <div className="flex flex-col gap-4">
@@ -193,7 +200,7 @@ const ProductDetail = () => {
                                 className="w-8 flex justify-center items-center h-full hover:bg-slate-100 transition-colors text-slate-600"
                             ><Plus size={16}/></button>
                         </div>
-                        <span className="text-xs text-slate-500">{product.stock_quantity ?? 0} available</span>
+                        <span className="text-xs text-slate-500">{activeStock} available</span>
                     </div>
 
                     <div className="flex flex-col gap-3 mt-4">
@@ -456,7 +463,7 @@ const ProductDetail = () => {
                                 </div>
                                 <div className="p-3 bg-white">
                                     <h4 className="text-xs font-semibold text-slate-700 line-clamp-2 mb-1">{item.name}</h4>
-                                    <p className="text-sm font-black text-red-600">${item.price}</p>
+                                    <p className="text-sm font-black text-red-600">Ksh {item.price}</p>
                                 </div>
                             </Link>
                         ))}

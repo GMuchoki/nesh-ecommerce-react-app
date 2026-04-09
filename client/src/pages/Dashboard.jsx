@@ -86,7 +86,7 @@ const Dashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="text-slate-500 font-medium mb-1">Total</p>
-                                                <p className="font-semibold text-slate-800">${(order.total_amount || 0).toFixed(2)}</p>
+                                                <p className="font-semibold text-slate-800">Ksh {(order.total_amount || 0).toFixed(2)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-slate-500 font-medium mb-1">Order #</p>

@@ -48,7 +48,7 @@ export default function OrdersTab({ orders = [], isLoading }) {
                                         {order.pos_walkin ? 'POS IN-STORE' : 'ONLINE WEB'}
                                     </span>
                                 </td>
-                                <td className="p-4 font-black text-slate-800">${order.total_amount}</td>
+                                <td className="p-4 font-black text-slate-800">Ksh {order.total_amount}</td>
                                 <td className="p-4 text-right">
                                     <select 
                                         value={order.status || 'pending'}

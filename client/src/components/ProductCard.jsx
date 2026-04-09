@@ -60,9 +60,9 @@ const ProductCard = ({ product }) => {
                 <h3 className="product-title">{product.name}</h3>
 
                 <div className="product-price-section">
-                    <p className="product-current-price">${product.price}</p>
+                    <p className="product-current-price">Ksh {product.price}</p>
                     {discountPercent > 0 && (
-                        <span className="product-original-price">${originalPrice}</span>
+                        <span className="product-original-price">Ksh {originalPrice}</span>
                     )}
                 </div>
                 <div className="product-rating-section text-sm text-slate-600 flex items-center justify-between mt-3">
