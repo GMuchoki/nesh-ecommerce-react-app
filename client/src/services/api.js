@@ -142,3 +142,48 @@ export async function deleteProduct(id) {
     if (error) throw error;
     return true;
 }
+
+export async function getAllOrders() {
+    const { data, error } = await supabase
+        .from('orders')
+        .select(`
+            *,
+            order_items (
+                id, product_id, quantity, unit_price,
+                products ( name, image_url )
+            ),
+            profiles!orders_customer_id_fkey ( full_name, role )
+        `)
+        .order('created_at', { ascending: false });
+        
+    if (error) {
+        console.error("Error fetching all orders:", error);
+        return [];
+    }
+    return data || [];
+}
+
+export async function updateOrderStatus(orderId, status) {
+    const { data, error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId)
+        .select()
+        .single();
+        
+    if (error) throw error;
+    return data;
+}
+
+export async function getCustomers() {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+    if (error) {
+        console.error("Error fetching customers:", error);
+        return [];
+    }
+    return data || [];
+}
