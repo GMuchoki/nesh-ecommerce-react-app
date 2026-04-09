@@ -1,44 +1,33 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ProductCard from "../components/ProductCard";
 import Loader from "../components/Loader";
 import { getProducts, getCategories } from "../services/api";
 
 const Home = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const [categories, setCategories] = useState([]);
 
-  // Load categories
-  useEffect(() => {
-    getCategories()
-      .then((uniqueCats) => {
-        setCategories(uniqueCats.filter(Boolean));
-      })
-      .catch((err) => console.error("Error loading categories", err));
-  }, []);
+  // Cached query: categories load once and persist across navigation
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories,
+    select: (data) => data.filter(Boolean),
+  });
 
-  // Load products (all or by category)
-  useEffect(() => {
-    setLoading(true);
-    getProducts(category)
-      .then((data) => {
-        setProducts(data || []);
-      })
-      .catch((err) => setError(err))
-      .finally(() => setLoading(false));
-  }, [category]);
+  // Cached query: products auto-refresh when category changes
+  const { data: products = [], isLoading, isError } = useQuery({
+    queryKey: ['products', category],
+    queryFn: () => getProducts(category),
+  });
 
-  // Filter by search
+  // Filter by search (client-side, instant)
   const filtered = products.filter((p) =>
     (p.name || p.title || "").toLowerCase().includes((search || "").toLowerCase())
   );
 
-  if (loading) return <Loader />;
-  if (error) return <div className="container">Error loading products.</div>;
+  if (isLoading) return <Loader />;
+  if (isError) return <div className="container">Error loading products.</div>;
 
   return (
     <div className="container">

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -11,6 +12,7 @@ const Checkout = () => {
   const { cart, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -28,6 +30,9 @@ const Checkout = () => {
             total_amount: totalPrice,
             status: 'completed'
         }, cart);
+
+        // INVALIDATE CACHE so the homepage forces a background refresh and shows the updated stock!
+        queryClient.invalidateQueries({ queryKey: ['products'] });
 
         setSuccess(true);
         clearCart();

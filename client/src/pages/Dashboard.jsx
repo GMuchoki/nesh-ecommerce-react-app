@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import { getUserOrders } from "../services/api";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,25 +8,19 @@ import { Package, MapPin, CreditCard, Clock, ChevronRight } from "lucide-react";
 const Dashboard = () => {
     const { user, profile, logout } = useAuth();
     const navigate = useNavigate();
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (!user) {
-            navigate("/login");
-            return;
-        }
+    // Redirect if not logged in
+    if (!user) {
+        navigate("/login");
+        return null;
+    }
 
-        const fetchOrders = async () => {
-            const data = await getUserOrders(user.id);
-            setOrders(data);
-            setLoading(false);
-        };
-        
-        fetchOrders();
-    }, [user, navigate]);
-
-    if (!user) return null;
+    // Cached query: orders persist while user is on the site
+    const { data: orders = [], isLoading } = useQuery({
+        queryKey: ['orders', user.id],
+        queryFn: () => getUserOrders(user.id),
+        enabled: !!user?.id,
+    });
 
     return (
         <div className="container py-12 max-w-5xl">
@@ -68,7 +63,7 @@ const Dashboard = () => {
                         <Clock size={20} className="text-slate-400" /> Order History
                     </h2>
 
-                    {loading ? (
+                    {isLoading ? (
                         <div className="animate-pulse space-y-4">
                             {[1,2,3].map(i => <div key={i} className="h-32 bg-slate-100 rounded-xl"></div>)}
                         </div>

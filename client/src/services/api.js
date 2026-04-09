@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseClient";
 
 export async function getProducts(category = "all") {
-    let query = supabase.from('products').select('*');
+    let query = supabase.from('products').select('*, reviews (rating)');
     if (category !== "all") {
         query = query.eq('category', category);
     }
@@ -14,7 +14,7 @@ export async function getProducts(category = "all") {
 }
 
 export async function getProductsById(id) {
-    const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
+    const { data, error } = await supabase.from('products').select('*, reviews (rating)').eq('id', id).single();
     if (error) {
         console.error("Error fetching product:", error);
         return null;
@@ -33,16 +33,13 @@ export async function getCategories() {
 }
 
 export async function createOrder(orderData, orderItems) {
-    const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([orderData])
-        .select()
-        .single();
+    const orderId = crypto.randomUUID();
+    const { error: orderError } = await supabase.from('orders').insert([{ id: orderId, ...orderData }]);
     
     if (orderError) throw orderError;
     
     const items = orderItems.map(item => ({
-        order_id: order.id,
+        order_id: orderId,
         product_id: item.id,
         quantity: item.qty,
         unit_price: item.price
@@ -54,7 +51,7 @@ export async function createOrder(orderData, orderItems) {
         
     if (itemsError) throw itemsError;
 
-    return order;
+    return { id: orderId, ...orderData };
 }
 
 export async function getUserOrders(userId) {
@@ -93,4 +90,55 @@ export async function insertProduct(productData) {
         throw error;
     }
     return data;
+}
+
+export async function getProductReviews(productId) {
+    const { data, error } = await supabase
+        .from('reviews')
+        .select(`
+            id, rating, comment, created_at,
+            profiles ( * )
+        `)
+        .eq('product_id', productId)
+        .order('created_at', { ascending: false });
+        
+    if (error) {
+        console.error("Error fetching reviews:", error);
+        return [];
+    }
+    return data || [];
+}
+
+export async function submitReview(reviewData) {
+    const { data, error } = await supabase
+        .from('reviews')
+        .insert([reviewData])
+        .select()
+        .single();
+        
+    if (error) {
+        throw error;
+    }
+    return data;
+}
+export async function updateProduct(id, productData) {
+    const { data, error } = await supabase
+        .from('products')
+        .update(productData)
+        .eq('id', id)
+        .select()
+        .single();
+        
+    if (error) throw error;
+    return data;
+}
+
+export async function deleteProduct(id) {
+    const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+        
+    if (error) throw error;
+    return true;
 }

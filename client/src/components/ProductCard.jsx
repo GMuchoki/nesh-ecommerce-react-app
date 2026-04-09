@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useWishlist } from "../context/WishlistContext";
 import { toast } from "sonner";
+import { Star } from "lucide-react";
 
 const ProductCard = ({ product }) => {
 
@@ -11,7 +12,11 @@ const ProductCard = ({ product }) => {
     const originalPrice = (product.price / (1 - (product.discount_percentage || 0) / 100)).toFixed(2);
 
     const liked = isInWishlist(product.id);
-
+    
+    // Dynamic math for rendering true stars on the homepage
+    const avgRating = product.reviews && product.reviews.length > 0 
+      ? (product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length).toFixed(1)
+      : 'New';
     const handleWishlistClick = () => {
     const wasLiked = isInWishlist(product.id); // check current state before toggling
     toggleWishlist(product); // toggle it
@@ -60,9 +65,12 @@ const ProductCard = ({ product }) => {
                         <span className="product-original-price">${originalPrice}</span>
                     )}
                 </div>
-                <div className="product-rating-section">
-                    <span>⭐5.0</span>
-                    <span className="product-stock-info">{product.stock_quantity ?? 0} in stock</span>
+                <div className="product-rating-section text-sm text-slate-600 flex items-center justify-between mt-3">
+                    <span className="flex items-center gap-1 font-semibold text-slate-800">
+                        <Star size={14} className="fill-orange-400 text-orange-400" /> 
+                        {avgRating}
+                    </span>
+                    <span className="product-stock-info font-medium">{product.stock_quantity ?? 0} in stock</span>
                 </div>
             </div>
         </article>

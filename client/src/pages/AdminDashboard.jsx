@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
-import { getProducts, insertProduct } from "../services/api";
+import { getProducts, insertProduct, updateProduct, deleteProduct } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Database, Plus, Search, Edit2, Trash2, ShieldCheck, X } from "lucide-react";
@@ -8,13 +9,13 @@ import { Database, Plus, Search, Edit2, Trash2, ShieldCheck, X } from "lucide-re
 const AdminDashboard = () => {
     const { user, profile } = useAuth();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     
-    const [products, setProducts] = useState([]);
     const [search, setSearch] = useState("");
-    const [loading, setLoading] = useState(true);
     
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState(null);
     const [newProduct, setNewProduct] = useState({
         name: "",
         category: "",
@@ -24,44 +25,81 @@ const AdminDashboard = () => {
         description: "",
         discount_percentage: 0
     });
-    const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        if (profile?.role !== 'admin') {
-            toast.error("Unauthorized: Admin access restricted.");
-            navigate("/");
-            return;
+    // Guard: redirect non-admins
+    if (profile?.role !== 'admin') {
+        toast.error("Unauthorized: Admin access restricted.");
+        navigate("/");
+        return null;
+    }
+
+    // Cached query: products sync across Admin and Homepage
+    const { data: products = [], isLoading } = useQuery({
+        queryKey: ['products'],
+        queryFn: () => getProducts(),
+    });
+
+    const saveMutation = useMutation({
+        mutationFn: async (productToSave) => {
+            if (editingId) {
+                return await updateProduct(editingId, productToSave);
+            } else {
+                return await insertProduct(productToSave);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            setIsModalOpen(false);
+            setEditingId(null);
+            setNewProduct({ name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0 });
+            toast.success(editingId ? "Product updated successfully!" : "Product added to inventory!");
+        },
+        onError: (err) => {
+            toast.error(err.message || "Failed to save product");
         }
+    });
 
-        const fetchInventory = async () => {
-            const data = await getProducts();
-            setProducts(data);
-            setLoading(false);
-        };
-        
-        fetchInventory();
-    }, [profile, navigate]);
+    const deleteMutation = useMutation({
+        mutationFn: deleteProduct,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            toast.success("Product deleted successfully");
+        },
+        onError: () => {
+            toast.error("Failed to delete product. It might be linked to existing orders.");
+        }
+    });
 
     const handleSaveProduct = async (e) => {
         e.preventDefault();
-        setIsSaving(true);
-        try {
-            const productToSave = {
-                ...newProduct,
-                price: parseFloat(newProduct.price),
-                stock_quantity: parseInt(newProduct.stock_quantity, 10),
-                discount_percentage: parseFloat(newProduct.discount_percentage) || 0
-            };
-            const inserted = await insertProduct(productToSave);
-            setProducts([inserted, ...products]);
-            setIsModalOpen(false);
-            toast.success("Product added to inventory!");
-            setNewProduct({ name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0 });
-        } catch (err) {
-             toast.error(err.message || "Failed to add product");
-        } finally {
-            setIsSaving(false);
-        }
+        const productToSave = {
+            ...newProduct,
+            price: parseFloat(newProduct.price),
+            stock_quantity: parseInt(newProduct.stock_quantity, 10),
+            discount_percentage: parseFloat(newProduct.discount_percentage) || 0
+        };
+        saveMutation.mutate(productToSave);
+    };
+
+    const handleEditClick = (product) => {
+        setEditingId(product.id);
+        setNewProduct({
+            name: product.name || "",
+            category: product.category || "",
+            price: product.price || "",
+            stock_quantity: product.stock_quantity || "",
+            image_url: product.image_url || "",
+            description: product.description || "",
+            discount_percentage: product.discount_percentage || 0
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteClick = async (id) => {
+        if (!window.confirm("Are you sure you want to permanently delete this product?")) return;
+        deleteMutation.mutate(id);
     };
 
     const filtered = products.filter(p => (p.name || "").toLowerCase().includes(search.toLowerCase()));
@@ -81,7 +119,11 @@ const AdminDashboard = () => {
                     </div>
                 </div>
                 <button 
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => {
+                        setEditingId(null);
+                        setNewProduct({ name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0 });
+                        setIsModalOpen(true);
+                    }}
                     className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm"
                 >
                     <Plus size={18} /> Add Product
@@ -119,7 +161,7 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {loading ? (
+                            {isLoading ? (
                                 <tr><td colSpan="5" className="p-8 text-center text-slate-400">Loading inventory database...</td></tr>
                             ) : filtered.length === 0 ? (
                                 <tr><td colSpan="5" className="p-8 text-center text-slate-400">No products found.</td></tr>
@@ -146,9 +188,9 @@ const AdminDashboard = () => {
                                             {product.stock_quantity} IN STOCK
                                         </span>
                                     </td>
-                                    <td className="p-4 text-right">
-                                        <button className="text-slate-400 hover:text-blue-500 p-2 transition-colors"><Edit2 size={16} /></button>
-                                        <button className="text-slate-400 hover:text-red-500 p-2 transition-colors"><Trash2 size={16} /></button>
+                                    <td className="p-4 text-right whitespace-nowrap">
+                                        <button onClick={() => handleEditClick(product)} className="text-slate-400 hover:text-blue-500 p-2 transition-colors"><Edit2 size={16} /></button>
+                                        <button onClick={() => handleDeleteClick(product.id)} className="text-slate-400 hover:text-red-500 p-2 transition-colors"><Trash2 size={16} /></button>
                                     </td>
                                 </tr>
                             ))}
@@ -162,7 +204,7 @@ const AdminDashboard = () => {
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
-                            <h2 className="text-xl font-bold text-slate-800">Add New Product</h2>
+                            <h2 className="text-xl font-bold text-slate-800">{editingId ? "Edit Product" : "Add New Product"}</h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={24}/></button>
                         </div>
                         
@@ -205,8 +247,8 @@ const AdminDashboard = () => {
 
                         <div className="p-6 border-t border-slate-100 flex justify-end gap-3 shrink-0 bg-slate-50">
                             <button onClick={() => setIsModalOpen(false)} type="button" className="px-5 py-2.5 text-slate-600 font-semibold hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
-                            <button type="submit" form="add-product-form" disabled={isSaving} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                                {isSaving ? "Saving..." : "Save Product"}
+                            <button type="submit" form="add-product-form" disabled={saveMutation.isPending} className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                                {saveMutation.isPending ? "Saving..." : (editingId ? "Update Product" : "Save Product")}
                             </button>
                         </div>
                     </div>

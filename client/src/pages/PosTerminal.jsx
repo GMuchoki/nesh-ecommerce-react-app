@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getProducts, createOrder } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +9,7 @@ import { Search, ShoppingBag, Plus, Minus, Trash2, X, CheckCircle } from "lucide
 const PosTerminal = () => {
     const { user, profile } = useAuth();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     const [products, setProducts] = useState([]);
     const [search, setSearch] = useState("");
@@ -71,6 +73,13 @@ const PosTerminal = () => {
                 status: 'completed'
             }, cart);
             
+            // Invalidate global products cache so the web store sees the updated stock
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            
+            // Refresh POS local inventory memory seamlessly
+            const newInventory = await getProducts();
+            setProducts(newInventory);
+
             toast.success("Order processed successfully!");
             setCart([]);
             setCustomerEmail("");
