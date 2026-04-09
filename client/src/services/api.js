@@ -31,3 +31,28 @@ export async function getCategories() {
     const uniqueCategories = [...new Set((data || []).map(item => item.category))];
     return uniqueCategories;
 }
+
+export async function createOrder(orderData, orderItems) {
+    const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([orderData])
+        .select()
+        .single();
+    
+    if (orderError) throw orderError;
+    
+    const items = orderItems.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.qty,
+        unit_price: item.price
+    }));
+
+    const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(items);
+        
+    if (itemsError) throw itemsError;
+
+    return order;
+}
