@@ -20,7 +20,7 @@ const Wishlist = () => {
   const handleAddToCart = (product) => {
     addToCart(product, 1);
     toggleWishlist(product);
-    toast.success(`${product.title} added to cart ✅`);
+    toast.success(`${product.name || product.title} added to cart ✅`);
   };
 
   return (
@@ -29,9 +29,9 @@ const Wishlist = () => {
       <div className="wishlist-grid">
         {wishlist.map((product) => (
           <div key={product.id} className="wishlist-item">
-            <img src={product.thumbnail} alt={product.title} className="wishlist-thumb" />
+            <img src={product.image_url || product.thumbnail} alt={product.name || product.title} className="wishlist-thumb" />
             <div className="wishlist-info">
-              <h3>{product.title}</h3>
+              <h3>{product.name || product.title}</h3>
               <p>${product.price}</p>
             </div>
             <div className="wishlist-actions">

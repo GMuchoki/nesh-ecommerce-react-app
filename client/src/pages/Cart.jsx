@@ -22,9 +22,9 @@ const Cart = () => {
       <div className="cart-list">
         {cart.map(item => (
           <div key={item.id} className="cart-item">
-            <img src={item.thumbnail} alt={item.title} className="cart-thumb" />
+            <img src={item.image_url || item.thumbnail} alt={item.name || item.title} className="cart-thumb" />
             <div className="cart-meta">
-              <h3>{item.title}</h3>
+              <h3>{item.name || item.title}</h3>
               <p>${item.price} each</p>
               <label>
                 Qty

@@ -7,8 +7,8 @@ const ProductCard = ({ product }) => {
 
     const { toggleWishlist, isInWishlist } = useWishlist();
 
-    const discountPercent = Math.round(product.discountPercentage || 0);
-    const originalPrice = (product.price / (1 - (product.discountPercentage || 0) / 100)).toFixed(2);
+    const discountPercent = Math.round(product.discount_percentage || 0);
+    const originalPrice = (product.price / (1 - (product.discount_percentage || 0) / 100)).toFixed(2);
 
     const liked = isInWishlist(product.id);
 
@@ -17,9 +17,9 @@ const ProductCard = ({ product }) => {
     toggleWishlist(product); // toggle it
     
     if (wasLiked) {
-        toast.warning(`${product.title} removed from wishlist 💔`);
+        toast.warning(`${product.name} removed from wishlist 💔`);
     } else {
-        toast.success(`${product.title} added to wishlist ❤️`);
+        toast.success(`${product.name} added to wishlist ❤️`);
     }
     };
 
@@ -27,7 +27,7 @@ const ProductCard = ({ product }) => {
         <article className="product-card">
             <div className="product-thumbnail-container">
                 <Link to={`/product/${product.id}`}>
-                    <img src={product.thumbnail} alt={product.title} />
+                    <img src={product.image_url} alt={product.name} />
                 </Link>
                 {discountPercent > 0 ? (
                     <div className="discount-badge">-{discountPercent}%</div>
@@ -52,7 +52,7 @@ const ProductCard = ({ product }) => {
             </div>
 
             <div className="product-body">
-                <h3 className="product-title">{product.title}</h3>
+                <h3 className="product-title">{product.name}</h3>
 
                 <div className="product-price-section">
                     <p className="product-current-price">${product.price}</p>
@@ -61,8 +61,8 @@ const ProductCard = ({ product }) => {
                     )}
                 </div>
                 <div className="product-rating-section">
-                    <span>⭐{product.rating != null ? (Math.floor(product.rating * 10) / 10) : 'N/A'}</span>
-                    <span className="product-stock-info">{product.stock ?? 0} in stock</span>
+                    <span>⭐5.0</span>
+                    <span className="product-stock-info">{product.stock_quantity ?? 0} in stock</span>
                 </div>
             </div>
         </article>

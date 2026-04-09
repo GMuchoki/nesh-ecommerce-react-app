@@ -1,13 +1,33 @@
-import axios from "axios";
+import { supabase } from "./supabaseClient";
 
-const API_BASE = "https://dummyjson.com/products";
-
-export async function getProducts() {
-    const res = await axios.get(API_BASE);
-    return res.data;
+export async function getProducts(category = "all") {
+    let query = supabase.from('products').select('*');
+    if (category !== "all") {
+        query = query.eq('category', category);
+    }
+    const { data, error } = await query;
+    if (error) {
+        console.error("Error fetching products:", error);
+        return [];
+    }
+    return data || [];
 }
 
 export async function getProductsById(id) {
-    const res = await axios.get(`${API_BASE}/${id}`);
-    return res.data;
+    const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
+    if (error) {
+        console.error("Error fetching product:", error);
+        return null;
+    }
+    return data;
+}
+
+export async function getCategories() {
+    const { data, error } = await supabase.from('products').select('category');
+    if (error) {
+        console.error("Error fetching categories:", error);
+        return [];
+    }
+    const uniqueCategories = [...new Set((data || []).map(item => item.category))];
+    return uniqueCategories;
 }

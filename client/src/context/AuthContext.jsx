@@ -8,57 +8,68 @@ export const AuthProvider = ({ children }) => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        // Get initial session
-        const fetchSession = async () => {
-            const { data: { session }, error } = await supabase.auth.getSession();
-            if (error) {
-                console.error("Error fetching session:", error);
+    const fetchProfile = async (userId) => {
+        try {
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .maybeSingle();
+
+            if (data) {
+                setProfile(data);
             }
+        } catch (err) {
+            console.error("Error fetching profile:", err);
+        }
+    };
+
+    useEffect(() => {
+        // 1. Get the current session immediately on mount
+        supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null);
             if (session?.user) {
-                await fetchProfile(session.user.id);
+                // Fire-and-forget: don't block loading on profile fetch
+                fetchProfile(session.user.id);
             }
             setLoading(false);
-        };
-        fetchSession();
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                await fetchProfile(session.user.id);
-            } else {
-                setProfile(null);
-            }
+        }).catch((err) => {
+            console.error("Session fetch error:", err);
+            setLoading(false);
         });
+
+        // 2. Listen for FUTURE auth changes (login, logout, token refresh)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            (_event, session) => {
+                setUser(session?.user ?? null);
+                if (session?.user) {
+                    fetchProfile(session.user.id);
+                } else {
+                    setProfile(null);
+                }
+            }
+        );
 
         return () => subscription.unsubscribe();
     }, []);
 
-    const fetchProfile = async (userId) => {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-        if (error) {
-            console.error("Error fetching profile:", error);
-        }
-        if (!error && data) {
-            setProfile(data);
-        }
-    };
-
     const logout = async () => {
         await supabase.auth.signOut();
-    }
+    };
 
     const value = { user, profile, loading, logout };
 
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'sans-serif' }}>
+                <p>Loading...</p>
+            </div>
+        );
+    }
+
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 };
@@ -66,3 +77,4 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
     return useContext(AuthContext);
 };
+

@@ -27,22 +27,22 @@ const ProductDetail = () => {
   if (error || !product) return <div className="container">Product Not found.</div>;
 
   const handleAdd = () => {
-    addToCart({ id: product.id, title: product.title, price: product.price, thumbnail: product.thumbnail }, Number(qty));
+    addToCart({ id: product.id, title: product.name, price: product.price, thumbnail: product.image_url }, Number(qty));
     navigate('/cart');
   };
 
   const whatsappNumber = "254700127598";
-  const message = `Hi, I want to order the ${product.title} for Ksh ${product.price} each. Quantity: ${qty}.`;
+  const message = `Hi, I want to order the ${product.name} for Ksh ${product.price} each. Quantity: ${qty}.`;
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
   return (
     <div className="container product-detail">
       <div className="detail-left">
-        <img src={product.thumbnail} alt={product.title} className="detail-thumb" />
+        <img src={product.image_url} alt={product.name} className="detail-thumb" />
       </div>
       <div className="detail-right">
-        <h1>{product.title}</h1>
-        <p className="muted">{product.brand} — {product.category}</p>
+        <h1>{product.name}</h1>
+        <p className="muted">{product.category}</p>
         <p className="price">${product.price}</p>
         <p>{product.description}</p>
 

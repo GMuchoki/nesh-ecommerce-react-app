@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import Loader from "../components/Loader";
+import { getProducts, getCategories } from "../services/api";
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -13,32 +14,19 @@ const Home = () => {
 
   // Load categories
   useEffect(() => {
-    fetch("https://dummyjson.com/products/categories")
-      .then((res) => res.json())
-      .then((data) => {
-        // Normalize data: always return array of strings
-        const normalized = data.map((item) =>
-          typeof item === "string"
-            ? item
-            : item.slug || item.name || ""
-        );
-        setCategories(normalized.filter(Boolean));
+    getCategories()
+      .then((uniqueCats) => {
+        setCategories(uniqueCats.filter(Boolean));
       })
-      .catch(() => {});
+      .catch((err) => console.error("Error loading categories", err));
   }, []);
 
   // Load products (all or by category)
   useEffect(() => {
     setLoading(true);
-    let url =
-      category === "all"
-        ? "https://dummyjson.com/products?limit=100"
-        : `https://dummyjson.com/products/category/${category}`;
-
-    fetch(url)
-      .then((res) => res.json())
+    getProducts(category)
       .then((data) => {
-        setProducts(data.products || []);
+        setProducts(data || []);
       })
       .catch((err) => setError(err))
       .finally(() => setLoading(false));
@@ -46,7 +34,7 @@ const Home = () => {
 
   // Filter by search
   const filtered = products.filter((p) =>
-    p.title.toLowerCase().includes(search.toLowerCase())
+    (p.name || p.title || "").toLowerCase().includes((search || "").toLowerCase())
   );
 
   if (loading) return <Loader />;
