@@ -56,3 +56,41 @@ export async function createOrder(orderData, orderItems) {
 
     return order;
 }
+
+export async function getUserOrders(userId) {
+    if (!userId) return [];
+    
+    // We fetch orders and their related items joined with products.
+    // Supabase allows this if foreign keys are properly set up:
+    const { data, error } = await supabase
+        .from('orders')
+        .select(`
+            *,
+            order_items (
+                id, product_id, quantity, unit_price,
+                products ( name, image_url )
+            )
+        `)
+        .eq('customer_id', userId)
+        .order('created_at', { ascending: false });
+        
+    if (error) {
+        console.error("Error fetching user orders:", error);
+        return [];
+    }
+    
+    return data || [];
+}
+
+export async function insertProduct(productData) {
+    const { data, error } = await supabase
+        .from('products')
+        .insert([productData])
+        .select()
+        .single();
+        
+    if (error) {
+        throw error;
+    }
+    return data;
+}
