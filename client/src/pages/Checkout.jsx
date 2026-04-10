@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { createOrder } from "../services/api";
 import { toast } from "sonner";
-import { ShoppingBag, CheckCircle, ArrowRight } from "lucide-react";
+import { ShoppingBag, CheckCircle, ArrowRight, ShieldCheck } from "lucide-react";
 
 const Checkout = () => {
 
@@ -18,31 +18,78 @@ const Checkout = () => {
   const [success, setSuccess] = useState(false);
   const [guestEmail, setGuestEmail] = useState(user?.email || "");
 
-  const handleCheckout = async () => {
-    if (!guestEmail.includes('@')) return toast.warning("Please enter a valid email address for your receipt.");
-    
+  const handleCheckoutBackend = async (reference) => {
     setProcessing(true);
 
     try {
-        await createOrder({
-            customer_id: user?.id || null, 
-            guest_email: guestEmail,
-            total_amount: totalPrice,
-            status: 'pending'
-        }, cart);
+        const response = await fetch('http://localhost:5000/api/verify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                reference,
+                guestEmail,
+                userId: user?.id || null,
+                cart,
+                totalAmount: totalPrice
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || "Server rejected verification");
+        }
 
         // INVALIDATE CACHE so the homepage forces a background refresh and shows the updated stock!
         queryClient.invalidateQueries({ queryKey: ['products'] });
 
         setSuccess(true);
         clearCart();
-        toast.success("Order placed successfully! 🎉");
+        toast.success("Order fully secured! 🎉 Redirecting...", { duration: 4000 });
+        
+        // Explicitly bounce the user away so they don't feel stuck on the checkout URL
+        setTimeout(() => {
+            navigate(user ? '/dashboard' : '/');
+        }, 3500);
+
     } catch (error) {
         console.error("Checkout failed:", error);
-        toast.error("There was an issue processing your order. Please try again.");
+        toast.error(`Order Error: ${error.message || 'An unexpected problem occurred'}`);
     } finally {
         setProcessing(false);
     }
+  };
+
+  React.useEffect(() => {
+    if (!document.getElementById('paystack-script')) {
+        const script = document.createElement('script');
+        script.id = 'paystack-script';
+        script.src = "https://js.paystack.co/v1/inline.js";
+        script.async = true;
+        document.head.appendChild(script);
+    }
+  }, []);
+
+  const triggerPayment = () => {
+    if (!guestEmail.includes('@')) return toast.warning("Please enter a valid email address for your receipt.");
+    if (cart.length === 0) return toast.warning("Your cart is empty.");
+    if (!window.PaystackPop) return toast.error("Payment gateway is loading, please wait a second...");
+
+    const handler = window.PaystackPop.setup({
+        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+        email: guestEmail,
+        amount: Math.round(totalPrice * 100),
+        currency: 'KES',
+        reference: (new Date()).getTime().toString(),
+        callback: function(response) {
+            toast.success("Payment Received! Finalizing order on the server...");
+            handleCheckoutBackend(response.reference);
+        },
+        onClose: function() {
+            toast.error("Payment window closed. Order not fully completed.");
+        }
+    });
+    handler.openIframe();
   };
 
   if (cart.length === 0 && !success) {
@@ -131,14 +178,14 @@ const Checkout = () => {
             </div>
             
             <button 
-                onClick={handleCheckout} 
+                onClick={triggerPayment} 
                 disabled={processing || cart.length === 0}
                 className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-500/30 text-lg"
             >
-                {processing ? 'Processing...' : `Pay Ksh ${totalPrice.toFixed(2)}`}
+                {processing ? 'Processing Server...' : `Pay Ksh ${totalPrice.toFixed(2)}`}
             </button>
             <p className="text-center text-xs text-slate-400 mt-4 flex items-center justify-center gap-1">
-                Payments processed securely.
+                <ShieldCheck size={14} className="text-green-500"/> Secured by Paystack
             </p>
         </div>
 
