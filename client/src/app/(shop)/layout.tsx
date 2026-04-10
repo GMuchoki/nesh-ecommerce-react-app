@@ -9,8 +9,9 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
 
   if (loading || (user && profile === null)) return null;
 
-  // Block staff from the storefront
-  if (user && profile && profile.role !== "member") {
+  // Block internal staff (admin/salesperson) from the storefront
+  const internalRoles = ["admin", "salesperson"];
+  if (user && profile && internalRoles.includes(profile.role)) {
     const adminRoute = process.env.NEXT_PUBLIC_ADMIN_SECRET_ROUTE || "admin";
     const posRoute = process.env.NEXT_PUBLIC_POS_SECRET_ROUTE || "pos";
     return (
