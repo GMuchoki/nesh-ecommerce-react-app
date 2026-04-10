@@ -26,7 +26,7 @@ const PosLogin = lazy(() => import("./pages/auth/PosLogin"));
 
 const AdminGuard = ({ children }) => {
     const { user, profile, loading } = useAuth();
-    if (loading) return null;
+    if (loading || (user && profile === null)) return null; // Prevent race-condition flash
     if (!user) return <AdminLogin />;
     if (profile?.role === 'admin') return children;
     return (
@@ -43,7 +43,7 @@ const AdminGuard = ({ children }) => {
 
 const PosGuard = ({ children }) => {
     const { user, profile, loading } = useAuth();
-    if (loading) return null;
+    if (loading || (user && profile === null)) return null; // Prevent race-condition flash
     if (!user) return <PosLogin />;
     if (profile?.role === 'salesperson') return children;
     return (
@@ -57,17 +57,45 @@ const PosGuard = ({ children }) => {
     );
 };
 
+const StorefrontGuard = ({ children }) => {
+    const { user, profile, loading } = useAuth();
+    if (loading || (user && profile === null)) return null;
+    
+    if (user && profile && profile.role !== 'member') {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-slate-50 font-sans p-4 text-center">
+                 <div className="p-10 bg-white shadow-2xl rounded-3xl max-w-sm w-full border border-slate-100">
+                     <h1 className="text-xl font-black text-slate-800 mb-2 uppercase tracking-wide">Session Blocked</h1>
+                     <p className="text-slate-500 mb-8 text-sm font-medium">You are currently authenticated as an internal employee. Public retail modules are strictly restricted to customer accounts.</p>
+                     
+                     <div className="flex flex-col gap-3">
+                         {profile.role === 'admin' && (
+                             <a href={import.meta.env.VITE_ADMIN_SECRET_ROUTE || "/admin"} className="w-full py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all uppercase tracking-widest text-xs">Return to Command Center</a>
+                         )}
+                         {profile.role === 'salesperson' && (
+                             <a href={import.meta.env.VITE_POS_SECRET_ROUTE || "/pos"} className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all uppercase tracking-widest text-xs">Return to Cashier Till</a>
+                         )}
+                     </div>
+                 </div>
+            </div>
+        );
+    }
+    return children;
+};
+
 const StorefrontLayout = () => {
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow">
-                <Suspense fallback={<Loader />}>
-                    <Outlet />
-                </Suspense>
-            </main>
-            <Footer />
-        </div>
+        <StorefrontGuard>
+            <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="flex-grow">
+                    <Suspense fallback={<Loader />}>
+                        <Outlet />
+                    </Suspense>
+                </main>
+                <Footer />
+            </div>
+        </StorefrontGuard>
     );
 };
 
