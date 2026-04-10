@@ -12,13 +12,25 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
             toast.error(error.message);
-        } else {
-            toast.success("Welcome back!");
-            navigate('/');
+            setLoading(false);
+            return;
         }
+        
+        // Zero-Trust Boundary Validation
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', authData.user.id).single();
+        
+        if (profile?.role === 'admin' || profile?.role === 'salesperson') {
+            await supabase.auth.signOut();
+            toast.error("SECURITY HALT: Staff and Executive accounts must authenticate via secure internal routing.");
+            setLoading(false);
+            return;
+        }
+
+        toast.success("Welcome back!");
+        navigate('/');
         setLoading(false);
     };
 
