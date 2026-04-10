@@ -11,6 +11,7 @@ import OrdersTab from "../components/admin/OrdersTab";
 import CRMTab from "../components/admin/CRMTab";
 import InventoryTab from "../components/admin/InventoryTab";
 import BrandsTab from "../components/admin/BrandsTab";
+import TeamTab from "../components/admin/TeamTab";
 
 const AdminDashboard = () => {
     const { profile } = useAuth();
@@ -59,6 +60,7 @@ const AdminDashboard = () => {
                         { id: 'orders', label: 'Fulfillment', icon: ShoppingBag },
                         { id: 'inventory', label: 'Inventory', icon: Box },
                         { id: 'brands', label: 'Brands', icon: Tags },
+                        { id: 'team', label: 'Sales Team', icon: ShieldCheck },
                         { id: 'customers', label: 'CRM / Customers', icon: Users }
                     ].map(tab => (
                         <button
@@ -79,6 +81,7 @@ const AdminDashboard = () => {
                 {activeTab === 'customers' && <CRMTab customers={customers} isLoading={customersLoading} />}
                 {activeTab === 'inventory' && <InventoryTab products={products} isLoading={productsLoading} brands={brands} />}
                 {activeTab === 'brands' && <BrandsTab brands={brands} isLoading={brandsLoading} />}
+                {activeTab === 'team' && <TeamTab orders={orders} />}
 
             </div>
         </div>

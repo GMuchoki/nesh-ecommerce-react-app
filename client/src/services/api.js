@@ -214,3 +214,56 @@ export async function deleteBrand(id) {
     if (error) throw error;
     return true;
 }
+
+// ----------------------------------------------------
+// STAFF & COMMISSION MODULE
+// ----------------------------------------------------
+export async function getSalesTeam() {
+    const { data: staff, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'salesperson');
+    if (error) throw error;
+    return staff || [];
+}
+
+export async function createSalesStaff(staffData) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) throw new Error("No active session");
+    
+    // Calls our new secure Node.js provisioning endpoint
+    const res = await fetch('http://localhost:5000/api/admin/create-staff', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(staffData)
+    });
+    
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || "Failed to provision staff account");
+    return result;
+}
+
+// ----------------------------------------------------
+// DARAJA (M-PESA) MODULE
+// ----------------------------------------------------
+export async function pushSTK(phone, amount) {
+    const res = await fetch('http://localhost:5000/api/mpesa/stkpush', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, amount })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error);
+    return result;
+}
+
+export async function verifySTK(checkoutRequestId) {
+    const res = await fetch(`http://localhost:5000/api/mpesa/stkpush/query/${checkoutRequestId}`);
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error);
+    return result;
+}

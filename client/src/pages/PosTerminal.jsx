@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { getProducts, createOrder } from "../services/api";
+import { getProducts, createOrder, pushSTK, verifySTK } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
-import { Search, ShoppingBag, Plus, Minus, Trash2, X, CheckCircle } from "lucide-react";
+import { Search, ShoppingBag, Plus, Minus, Trash2, X, CheckCircle, Smartphone } from "lucide-react";
 
 const PosTerminal = () => {
     const { user, profile } = useAuth();
@@ -16,6 +16,12 @@ const PosTerminal = () => {
     const [cart, setCart] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [customerEmail, setCustomerEmail] = useState("");
+    
+    // M-Pesa Architecture
+    const [paymentMethod, setPaymentMethod] = useState("Cash");
+    const [mpesaPhone, setMpesaPhone] = useState("");
+    const [checkoutRequestId, setCheckoutRequestId] = useState(null);
+    const [isVerifying, setIsVerifying] = useState(false);
 
     // Verify Authorization
     useEffect(() => {
@@ -61,39 +67,78 @@ const PosTerminal = () => {
 
     const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-    const handleCheckout = async () => {
-        if (cart.length === 0) return toast.warning("Terminal cart is empty!");
+    const finalizeSystemOrder = async (referenceStamp = null) => {
         setIsProcessing(true);
-
         try {
             await createOrder({
-                customer_id: user.id, // Salesperson ringing it up
+                customer_id: null,
+                sales_person_id: user.id, // Explicit attribution
                 guest_email: customerEmail || "walk-in@store.local",
                 total_amount: total,
                 pos_walkin: true,
                 status: 'delivered'
+                // You can add payment_method and payment_reference to Supabase later if you run the SQL!
             }, cart);
             
-            // Invalidate global products cache so the web store sees the updated stock
             queryClient.invalidateQueries({ queryKey: ['products'] });
-            
-            // Refresh POS local inventory memory seamlessly
             const newInventory = await getProducts();
             setProducts(newInventory);
 
-            toast.success("Order processed successfully!");
+            toast.success("Sale Recorded & Commission Logged!");
             setCart([]);
             setCustomerEmail("");
+            setMpesaPhone("");
+            setCheckoutRequestId(null);
         } catch (error) {
             console.error("Checkout failed", error);
-            // Fallback for schema mismatch
-            if (error?.message?.includes("total_amount")) {
-                toast.error("Schema mismatch: Trying fallback order insert...");
-            } else {
-                toast.error(error?.message || "Failed to process order");
-            }
+            toast.error(error.message || "Failed to process order.");
         } finally {
             setIsProcessing(false);
+            setIsVerifying(false);
+        }
+    };
+
+    const handleTerminalAction = async () => {
+        if (cart.length === 0) return toast.warning("Terminal cart is empty!");
+
+        if (paymentMethod === 'MPesa') {
+            if (!mpesaPhone.trim() || mpesaPhone.length < 9) return toast.warning("Provide a valid customer Safaricom number.");
+            setIsProcessing(true);
+            try {
+                const res = await pushSTK(mpesaPhone, total);
+                setCheckoutRequestId(res.CheckoutRequestID);
+                toast.success("STK Push triggered! Device unlocked.");
+            } catch (err) {
+                toast.error(err.message || "STK Push failed. Ensure sandbox keys are valid.");
+            } finally {
+                setIsProcessing(false);
+            }
+            return;
+        }
+
+        // Cash / Generic External Card
+        finalizeSystemOrder();
+    };
+
+    const handleVerifyDaraja = async () => {
+        if (!checkoutRequestId) return;
+        setIsVerifying(true);
+        try {
+            const res = await verifySTK(checkoutRequestId);
+            if (res.status === 'paid') {
+                toast.success("Safaricom Verified! Payment acquired.");
+                finalizeSystemOrder(checkoutRequestId);
+            } else if (res.status === 'pending') {
+                toast.info("Customer has not yet typed PIN.");
+            } else {
+                toast.error(`Daraja Report: ${res.message}`);
+                setCheckoutRequestId(null);
+            }
+        } catch (err) {
+            toast.error(err.message || "Network Error contacting Daraja");
+        } finally {
+            // Anti-spam
+            setTimeout(()=> setIsVerifying(false), 2000);
         }
     };
 
@@ -212,34 +257,75 @@ const PosTerminal = () => {
 
                     {/* Checkout Box */}
                     <div className="p-6 bg-slate-50 border-t border-slate-200 shrink-0">
+                        
                         <div className="mb-4">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Customer Email (Optional)</label>
-                            <input 
-                                type="email" 
-                                value={customerEmail}
-                                onChange={e => setCustomerEmail(e.target.value)}
-                                placeholder="Walk-in customer"
-                                className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                            />
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Payment Method</label>
+                            <select 
+                                value={paymentMethod} 
+                                onChange={e => { setPaymentMethod(e.target.value); setCheckoutRequestId(null); }}
+                                className="w-full p-2.5 border border-slate-200 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 font-semibold text-slate-700"
+                            >
+                                <option value="Cash">Cash (Manual Trust)</option>
+                                <option value="Card">PDQ Terminal (Card/Till)</option>
+                                <option value="MPesa">Safaricom Express (STK Push)</option>
+                            </select>
                         </div>
-
-                        <div className="flex justify-between items-center mb-6">
+                        
+                        {paymentMethod === 'MPesa' && (
+                            <div className="mb-4 animation-fadeIn">
+                                <label className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-1 block">Customer M-PESA Number</label>
+                                <div className="relative">
+                                    <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500" size={18} />
+                                    <input 
+                                        type="tel" 
+                                        value={mpesaPhone}
+                                        onChange={e => setMpesaPhone(e.target.value)}
+                                        placeholder="07XX XXX XXX"
+                                        className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-green-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 font-sans font-bold text-slate-800"
+                                        disabled={!!checkoutRequestId}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="flex justify-between items-center mb-6 pt-2 border-t border-slate-200">
                             <span className="text-slate-500 font-medium">Total Balance</span>
                             <span className="text-3xl font-bold text-slate-900">Ksh {total.toFixed(2)}</span>
                         </div>
 
-                        <button 
-                            onClick={handleCheckout}
-                            disabled={cart.length === 0 || isProcessing}
-                            className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-300 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-red-500/30"
-                        >
-                            {isProcessing ? "Processing..." : (
-                                <>
-                                    <CheckCircle size={20} />
-                                    Charge ${total.toFixed(2)}
-                                </>
-                            )}
-                        </button>
+                        {!checkoutRequestId ? (
+                            <button 
+                                onClick={handleTerminalAction}
+                                disabled={cart.length === 0 || isProcessing}
+                                className={`w-full text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg ${paymentMethod === 'MPesa' ? 'bg-green-600 hover:bg-green-700 shadow-green-500/30' : 'bg-red-600 hover:bg-red-700 shadow-red-500/30 disabled:bg-slate-300'}`}
+                            >
+                                {isProcessing ? "Transacting..." : (
+                                    <>
+                                        <CheckCircle size={20} />
+                                        {paymentMethod === 'MPesa' ? 'Trigger M-PESA Pin' : `Commit Ksh ${total.toFixed(2)} Revenue`}
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                           <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200 shadow-inner">
+                               <div className="text-sm font-semibold text-center text-slate-600 animate-pulse flex items-center justify-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-green-500"></span> Phone Buzzing...
+                               </div>
+                               <button 
+                                   onClick={handleVerifyDaraja}
+                                   disabled={isVerifying}
+                                   className="w-full bg-slate-900 border border-slate-900 hover:bg-slate-800 disabled:opacity-75 text-white font-bold py-3 rounded-lg flex items-center justify-center transition-colors"
+                               >
+                                   {isVerifying ? "Contacting Safaricom..." : "Verify Payment Status"}
+                               </button>
+                               <button 
+                                  onClick={() => setCheckoutRequestId(null)}
+                                  className="w-full text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors"
+                               >
+                                  Cancel STK & Reset Drawer
+                               </button>
+                           </div>
+                        )}
                     </div>
                 </div>
 
