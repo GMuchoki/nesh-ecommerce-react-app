@@ -43,12 +43,6 @@ const Header = () => {
                 </Link>
                 {user ? (
                     <>
-                        {profile?.role === 'admin' && (
-                           <Link to="/admin" className="text-purple-600 font-semibold mx-0 sm:ml-2" onClick={() => setMenuOpen(false)}>Admin Portal</Link> 
-                        )}
-                        {profile?.role === 'salesperson' && (
-                           <Link to="/pos" className="text-blue-500 font-semibold" onClick={() => setMenuOpen(false)}>POS Terminal</Link> 
-                        )}
                         <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="flex items-center gap-1 font-medium text-slate-800 hover:text-red-500 transition-colors mx-0 sm:ml-2">
                             <User size={16} /> My Account
                         </Link>

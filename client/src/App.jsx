@@ -33,9 +33,9 @@ const App = () => {
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
-                    <Route path="/pos" element={<PosTerminal />} />
+                    <Route path={import.meta.env.VITE_POS_SECRET_ROUTE || "/pos"} element={<PosTerminal />} />
                     <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path={import.meta.env.VITE_ADMIN_SECRET_ROUTE || "/admin"} element={<AdminDashboard />} />
                 </Routes>
             </Suspense>
             <Footer />
