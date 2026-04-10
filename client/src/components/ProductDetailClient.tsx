@@ -6,23 +6,25 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getProductsById, getProductReviews, submitReview, getProducts } from "@/lib/api";
 import Loader from "@/components/Loader";
+import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { Star, ShieldCheck, Truck, RotateCcw, Plus, Minus, ThumbsUp, MessageSquare } from "lucide-react";
+import { Star, ShieldCheck, Truck, RotateCcw, Plus, Minus, ThumbsUp, MessageSquare, ChevronRight, ShoppingBag, Zap, Heart } from "lucide-react";
+import { useWishlist } from "@/context/WishlistContext";
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const queryClient = useQueryClient();
 
-  // Component State
   const [qty, setQty] = useState(1);
-  const [selectedVariant, setSelectedVariant] = useState(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("reviews");
-  
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
 
@@ -44,7 +46,7 @@ export default function ProductDetailPage() {
 
   React.useEffect(() => {
     if (product?.variants?.length > 0 && !selectedVariant) {
-        setSelectedVariant(product.variants[0]);
+      setSelectedVariant(product.variants[0]);
     }
   }, [product, selectedVariant]);
 
@@ -67,17 +69,17 @@ export default function ProductDetailPage() {
   });
 
   if (productLoading) return <Loader />;
-  if (isError || !product) return <div className="container py-20 text-center font-bold text-slate-500">Product Not found.</div>;
+  if (isError || !product) return <div className="container" style={{ padding: "5rem 1.5rem", textAlign: "center", color: "var(--text-muted)" }}>Product not found.</div>;
 
   const handleAdd = () => {
     addToCart({ id: product.id, title: product.name, price: activePrice, thumbnail: activeImage, variant: selectedVariant?.name || null }, Number(qty));
     router.push('/cart');
   };
-  
+
   const handleBuyNow = () => {
     addToCart({ id: product.id, title: product.name, price: activePrice, thumbnail: activeImage, variant: selectedVariant?.name || null }, Number(qty));
-    router.push('/checkout'); // Assuming a fast direct guest checkout route
-  }
+    router.push('/checkout');
+  };
 
   const whatsappNumber = "254700127598";
   const message = `Hi, I want to order the ${product?.name} ${selectedVariant ? `(${selectedVariant.name})` : ''} for Ksh ${activePrice} each. Quantity: ${qty}.`;
@@ -90,398 +92,375 @@ export default function ProductDetailPage() {
     reviewMutation.mutate({ product_id: product.id, user_id: user.id, rating, comment });
   };
 
-  const avgRating = reviews.length > 0 
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) 
-    : "5.0";
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const avgRating = reviews.length > 0 ? (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length).toFixed(1) : "5.0";
   const productVariants = product?.variants || [];
+  const liked = isInWishlist(product.id);
+
+  const tabs = [
+    { key: "reviews", label: `Reviews (${reviews.length})` },
+    { key: "specifications", label: "Specifications" },
+    { key: "description", label: "Description" },
+    { key: "similar", label: "Similar Products" },
+  ];
 
   return (
-    <div className="min-h-screen pb-12">
-      <div className="container px-4 py-8 max-w-7xl mx-auto">
-        
-        {/* TOP METADATA & BREADCRUMBS */}
-        <div className="flex gap-2 text-sm text-slate-500 mb-6">
-            <Link href="/" className="hover:text-red-500 transition-colors">Home</Link>
-            <span>/</span>
-            <span className="capitalize hover:text-red-500 transition-colors cursor-pointer">{product.category}</span>
-            <span>/</span>
-            <span className="text-slate-800 font-medium line-clamp-1">{product.name}</span>
-        </div>
+    <div style={{ minHeight: "100vh", paddingBottom: "3rem" }}>
+      <div className="container" style={{ maxWidth: "1280px", padding: "0 1.5rem" }}>
 
-        {/* --- MAIN HERO SECTION --- */}
-        <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
-          
-          {/* Left: Image Gallery */}
-          <div className="lg:w-4/12 xl:w-5/12 flex gap-4">
-              {/* Thumbnail strip mockup */}
-              <div className="hidden md:flex flex-col gap-2 w-16 shrink-0">
-                  <div className="w-16 h-16 rounded-md border-2 border-red-500 p-1 flex items-center justify-center overflow-hidden cursor-pointer">
-                      <img src={activeImage} alt="thumb" className="w-full h-full object-cover" />
-                  </div>
-                  {[2, 3, 4].map(idx => (
-                      <div key={idx} className="w-16 h-16 rounded-md border border-slate-200 hover:border-slate-400 bg-slate-50 overflow-hidden cursor-pointer opacity-70 hover:opacity-100 transition-all">
-                           <img src={activeImage} alt={`alt-${idx}`} className="w-full h-full object-cover mix-blend-multiply" />
-                      </div>
-                  ))}
+        {/* Breadcrumbs */}
+        <nav style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8125rem", color: "var(--text-muted)", padding: "1.25rem 0", fontWeight: 500 }}>
+          <Link href="/" style={{ color: "var(--text-muted)", transition: "color 0.2s" }}>Home</Link>
+          <ChevronRight size={14} />
+          <span style={{ textTransform: "capitalize" }}>{product.category}</span>
+          <ChevronRight size={14} />
+          <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{product.name}</span>
+        </nav>
+
+        {/* ─── Main Product Section ─── */}
+        <div className="pdp-layout">
+
+          {/* Left: Image */}
+          <div className="pdp-gallery">
+            {/* Thumbnail strip */}
+            <div className="pdp-thumbs">
+              <div className="pdp-thumb active">
+                <img src={activeImage} alt="thumb" />
               </div>
-              {/* Main Image */}
-              <div className="bg-slate-50 rounded-xl flex-1 aspect-square md:aspect-auto md:h-[600px] flex items-center justify-center p-4 border border-slate-100 overflow-hidden">
-                <img src={activeImage} alt={product.name} className="max-w-full max-h-full object-contain hover:scale-110 transition-transform duration-500 cursor-zoom-in" />
-              </div>
+              {[2, 3, 4].map(idx => (
+                <div key={idx} className="pdp-thumb">
+                  <img src={activeImage} alt={`alt-${idx}`} style={{ opacity: 0.6 }} />
+                </div>
+              ))}
+            </div>
+            {/* Main Image */}
+            <div className="pdp-main-image">
+              <img src={activeImage} alt={product.name} />
+            </div>
           </div>
 
-          {/* Center: Product Information & Purchase Area */}
-          <div className="lg:w-5/12 flex flex-col">
-            {product.brand && <div className="text-sm font-bold text-red-600 tracking-wider uppercase mb-1">{product.brand}</div>}
-            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 leading-snug mb-3">
-                {product.name}
+          {/* Center: Product Info */}
+          <div className="pdp-info">
+            {product.brand && (
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.375rem" }}>
+                {product.brand}
+              </div>
+            )}
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.3, marginBottom: "0.75rem" }}>
+              {product.name}
             </h1>
-            
-            <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-1">
-                    {[1,2,3,4,5].map(star => (
-                        <Star key={star} size={16} className={star <= Math.round(Number(avgRating)) ? "fill-orange-400 text-orange-400" : "fill-slate-200 text-slate-200"} />
-                    ))}
-                    <span className="font-bold text-slate-800 ml-1">{avgRating}</span>
-                </div>
-                <div className="text-slate-400 text-sm">{reviews.length} Reviews</div>
-                <div className="text-slate-400 text-sm">|</div>
-                <div className="text-slate-400 text-sm">{product.sales_count || 0} sold</div>
-            </div>
-            
-            <div className="bg-orange-50/50 rounded-xl p-4 mb-6 border border-orange-100">
-                <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-3xl lg:text-4xl font-black text-red-600">Ksh {Number(activePrice).toFixed(2)}</span>
-                    {product.discount_percentage > 0 && (
-                        <span className="text-sm text-slate-400 line-through">
-                            ${(activePrice / (1 - product.discount_percentage/100)).toFixed(2)}
-                        </span>
-                    )}
-                </div>
-                <div className="text-sm text-slate-500">Tax excluded, add at checkout if applicable</div>
+
+            {/* Rating */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                {[1, 2, 3, 4, 5].map(star => (
+                  <Star key={star} size={15} className={star <= Math.round(Number(avgRating)) ? "fill-amber-400 text-amber-400" : ""} style={star > Math.round(Number(avgRating)) ? { color: "var(--border-color)" } : {}} />
+                ))}
+                <span style={{ fontWeight: 700, color: "var(--text-primary)", marginLeft: "0.25rem", fontSize: "0.875rem" }}>{avgRating}</span>
+              </div>
+              <span style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>{reviews.length} Reviews</span>
+              <span style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>·</span>
+              <span style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>{product.sales_count || 0} sold</span>
             </div>
 
-            {/* Dynamic Variant Picker */}
+            {/* Price Block */}
+            <div className="pdp-price-block">
+              <div style={{ display: "flex", alignItems: "baseline", gap: "0.625rem", marginBottom: "0.25rem" }}>
+                <span style={{ fontSize: "2rem", fontWeight: 900, color: "var(--accent)" }}>Ksh {Number(activePrice).toLocaleString()}</span>
+                {product.discount_percentage > 0 && (
+                  <span style={{ fontSize: "0.875rem", color: "var(--text-muted)", textDecoration: "line-through" }}>
+                    Ksh {(activePrice / (1 - product.discount_percentage / 100)).toFixed(0)}
+                  </span>
+                )}
+                {product.discount_percentage > 0 && (
+                  <span style={{ fontSize: "0.6875rem", fontWeight: 700, background: "rgba(239,68,68,0.1)", color: "var(--accent)", padding: "0.125rem 0.5rem", borderRadius: "9999px" }}>
+                    -{Math.round(product.discount_percentage)}%
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Tax excluded · Add at checkout if applicable</div>
+            </div>
+
+            {/* Variants */}
             {productVariants.length > 0 && (
-                <div className="mb-6">
-                    <div className="text-sm font-semibold text-slate-800 mb-3">
-                        Variant: <span className="text-slate-600 font-normal">{selectedVariant?.name}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {productVariants.map((variant, idx) => (
-                            <button 
-                                key={idx}
-                                onClick={() => setSelectedVariant(variant)}
-                                className={`px-4 py-2 rounded-lg border-2 flex items-center gap-2 transition-all ${selectedVariant?.name === variant.name ? 'border-red-500 bg-red-50 text-red-700 shadow-sm' : 'border-slate-200 text-slate-600 hover:border-slate-400 bg-white'}`}
-                            >
-                                {variant.image_url && <img src={variant.image_url} className="w-5 h-5 object-cover rounded-md" alt={variant.name} />}
-                                <span className="font-semibold text-sm">{variant.name}</span>
-                            </button>
-                        ))}
-                    </div>
+              <div style={{ marginBottom: "1.5rem" }}>
+                <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.75rem" }}>
+                  Variant: <span style={{ fontWeight: 400 }}>{selectedVariant?.name}</span>
                 </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {productVariants.map((variant: any, idx: number) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedVariant(variant)}
+                      className="pdp-variant-btn"
+                      data-active={selectedVariant?.name === variant.name ? "true" : undefined}
+                    >
+                      {variant.image_url && <img src={variant.image_url} alt={variant.name} style={{ width: "20px", height: "20px", borderRadius: "4px", objectFit: "cover" }} />}
+                      <span>{variant.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
-            <div className="border-t border-dotted border-slate-300 py-6 mb-6">
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm font-semibold text-slate-800 w-16">Quantity:</span>
-                        <div className="flex items-center bg-white border border-slate-300 rounded-full overflow-hidden h-9 w-28">
-                            <button 
-                                onClick={() => setQty(Math.max(1, qty - 1))}
-                                className="w-8 flex justify-center items-center h-full hover:bg-slate-100 transition-colors text-slate-600"
-                            ><Minus size={16}/></button>
-                            <input 
-                                type="number" 
-                                value={qty} 
-                                readOnly
-                                className="w-full text-center font-semibold text-sm outline-none"
-                            />
-                            <button 
-                                onClick={() => setQty(Math.min(product.stock_quantity || 99, qty + 1))}
-                                className="w-8 flex justify-center items-center h-full hover:bg-slate-100 transition-colors text-slate-600"
-                            ><Plus size={16}/></button>
-                        </div>
-                        <span className="text-xs text-slate-500">{activeStock} available</span>
-                    </div>
-
-                    <div className="flex flex-col gap-3 mt-4">
-                        <div className="flex gap-3">
-                            <button onClick={handleBuyNow} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-full shadow-lg shadow-red-500/20 transition-all text-sm uppercase tracking-wide">
-                                Buy Now
-                            </button>
-                            <button onClick={handleAdd} className="flex-1 bg-orange-100 hover:bg-orange-200 text-red-600 font-bold py-3.5 px-6 rounded-full border border-orange-200 transition-all text-sm uppercase tracking-wide">
-                                Add to Cart
-                            </button>
-                        </div>
-                        <a
-                            href={whatsappLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-[#25D366] hover:bg-[#1ebd5b] text-white font-bold py-3.5 px-6 rounded-full shadow-sm transition-all text-sm uppercase tracking-wide flex items-center justify-center gap-2"
-                        >
-                            <img src="https://ik.imagekit.io/aaugzuprk/whatsapp-svgrepo-com%20(1).png?updatedAt=1758664354208" alt="WhatsApp" className="w-5 h-5 brightness-0 invert" />
-                            Order from WhatsApp
-                        </a>
-                    </div>
+            {/* Quantity + Actions */}
+            <div style={{ borderTop: "1px dashed var(--border-color)", paddingTop: "1.5rem", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.25rem" }}>
+                <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-secondary)", width: "60px" }}>Qty:</span>
+                <div style={{ display: "flex", alignItems: "center", background: "var(--bg-secondary)", borderRadius: "0.5rem", padding: "0.125rem", border: "1px solid var(--border-color)" }}>
+                  <button onClick={() => setQty(Math.max(1, qty - 1))} style={{ width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-card)", borderRadius: "0.375rem", border: "none", cursor: "pointer", color: "var(--text-primary)" }}>
+                    <Minus size={14} />
+                  </button>
+                  <span style={{ minWidth: "40px", textAlign: "center", fontWeight: 700, fontSize: "0.9375rem", color: "var(--text-primary)" }}>{qty}</span>
+                  <button onClick={() => setQty(Math.min(activeStock || 99, qty + 1))} style={{ width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-card)", borderRadius: "0.375rem", border: "none", cursor: "pointer", color: "var(--text-primary)" }}>
+                    <Plus size={14} />
+                  </button>
                 </div>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{activeStock} available</span>
+              </div>
+
+              {/* CTA Buttons */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+                <div style={{ display: "flex", gap: "0.625rem" }}>
+                  <button onClick={handleBuyNow} className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "0.875rem", borderRadius: "0.75rem", fontSize: "0.9375rem", fontWeight: 700 }}>
+                    <Zap size={16} /> Buy Now
+                  </button>
+                  <button onClick={handleAdd} className="pdp-secondary-btn" style={{ flex: 1 }}>
+                    <ShoppingBag size={16} /> Add to Cart
+                  </button>
+                </div>
+                <div style={{ display: "flex", gap: "0.625rem" }}>
+                  <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{
+                    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+                    background: "#25D366", color: "#fff", fontWeight: 700, fontSize: "0.8125rem", padding: "0.75rem",
+                    borderRadius: "0.75rem", border: "none", cursor: "pointer", transition: "all 0.2s", textDecoration: "none"
+                  }}>
+                    <img src="https://ik.imagekit.io/aaugzuprk/whatsapp-svgrepo-com%20(1).png?updatedAt=1758664354208" alt="WhatsApp" style={{ width: "18px", height: "18px", filter: "brightness(0) invert(1)" }} />
+                    Order via WhatsApp
+                  </a>
+                  <button
+                    onClick={() => { toggleWishlist(product); toast.success(liked ? "Removed from wishlist" : "Added to wishlist ❤️"); }}
+                    style={{
+                      width: "48px", height: "48px", display: "flex", alignItems: "center", justifyContent: "center",
+                      background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "0.75rem",
+                      cursor: "pointer", transition: "all 0.2s", flexShrink: 0
+                    }}
+                  >
+                    <Heart size={18} fill={liked ? "#ef4444" : "none"} color={liked ? "#ef4444" : "var(--text-muted)"} />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Right: Security & Shipping Promises */}
-          <div className="lg:w-3/12 xl:w-2/12">
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-700 space-y-6 lg:sticky lg:top-8">
+          {/* Right: Trust Sidebar */}
+          <div className="pdp-sidebar">
+            <div className="pdp-trust-card">
+              <h4 style={{ fontWeight: 700, color: "var(--text-primary)", marginBottom: "1rem", paddingBottom: "0.75rem", borderBottom: "1px solid var(--border-color)", fontSize: "0.875rem" }}>
+                Service Commitment
+              </h4>
+              {[
+                { icon: <Truck size={18} />, title: "Fast Shipping", desc: "Delivery within 3 business days" },
+                { icon: <RotateCcw size={18} />, title: "Return & Refund", desc: "Free return within 15 days" },
+                { icon: <ShieldCheck size={18} />, title: "Security & Privacy", desc: "Safe payments, we don't share details" },
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", gap: "0.75rem", marginBottom: i < 2 ? "1rem" : 0 }}>
+                  <div style={{ color: "var(--accent)", flexShrink: 0, marginTop: "2px" }}>{item.icon}</div>
+                  <div>
+                    <p style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.8125rem" }}>{item.title}</p>
+                    <p style={{ fontSize: "0.6875rem", color: "var(--text-muted)", marginTop: "0.125rem" }}>{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Tab Section ─── */}
+        <div style={{ marginTop: "3rem" }}>
+          <div className="pdp-tabs">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`pdp-tab ${activeTab === tab.key ? "active" : ""}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Description */}
+          {activeTab === 'description' && (
+            <div className="animation-fadeIn" style={{ maxWidth: "800px", padding: "1.5rem 0" }}>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.25rem" }}>Product Overview</h3>
+              <p style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "0.9375rem", whiteSpace: "pre-wrap" }}>{product.description}</p>
+              <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                {[
+                  { icon: <ShieldCheck size={40} strokeWidth={1} />, title: "Military Grade Protection", desc: "Tested to withstand drops from 10ft." },
+                  { icon: <Star size={40} strokeWidth={1} />, title: "Crystal Clear Material", desc: "Anti-yellowing polymer for lasting clarity." }
+                ].map((f, i) => (
+                  <div key={i} style={{
+                    background: "var(--bg-secondary)", borderRadius: "1rem", padding: "2rem", textAlign: "center",
+                    border: "1px solid var(--border-color)"
+                  }}>
+                    <div style={{ color: "var(--accent)", marginBottom: "0.75rem", display: "flex", justifyContent: "center" }}>{f.icon}</div>
+                    <h4 style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.9375rem", marginBottom: "0.375rem" }}>{f.title}</h4>
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{f.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Specifications */}
+          {activeTab === 'specifications' && (
+            <div className="animation-fadeIn" style={{ maxWidth: "800px", padding: "1.5rem 0" }}>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.25rem" }}>Technical Details</h3>
+              {product.specifications ? (
+                <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "1rem", padding: "1.5rem" }}>
+                  <p style={{ color: "var(--text-secondary)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{product.specifications}</p>
+                </div>
+              ) : (
+                <div style={{ borderRadius: "1rem", overflow: "hidden", border: "1px solid var(--border-color)" }}>
+                  <table style={{ width: "100%", fontSize: "0.875rem", textAlign: "left", borderCollapse: "collapse" }}>
+                    <tbody>
+                      {[
+                        { label: "Category", value: product.category },
+                        { label: "Material", value: "Premium High-Durability Components" },
+                        { label: "Features", value: "Anti-Scratch, Lightweight, Premium Build" },
+                        { label: "Brand", value: product.brand || "NeshStore Verified" },
+                      ].map((row, i) => (
+                        <tr key={i} style={{ borderBottom: i < 3 ? "1px solid var(--border-color)" : "none" }}>
+                          <td style={{ padding: "0.875rem 1.25rem", fontWeight: 600, color: "var(--text-muted)", width: "35%", background: i % 2 === 0 ? "var(--bg-secondary)" : "transparent" }}>{row.label}</td>
+                          <td style={{ padding: "0.875rem 1.25rem", color: "var(--text-primary)", textTransform: row.label === "Category" ? "capitalize" : "none", background: i % 2 === 0 ? "var(--bg-secondary)" : "transparent" }}>{row.value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Reviews */}
+          {activeTab === 'reviews' && (
+            <div className="animation-fadeIn" style={{ maxWidth: "960px", padding: "1.5rem 0" }}>
+              <div className="pdp-reviews-layout">
+                {/* Write Review */}
                 <div>
-                    <h4 className="font-bold text-slate-900 mb-2 border-b border-slate-200 pb-2">Service Commitment</h4>
-                    <div className="flex items-start gap-3 mt-3">
-                        <Truck size={18} className="text-slate-800 mt-0.5 shrink-0" />
-                        <div>
-                            <p className="font-bold text-slate-800">Fast Shipping</p>
-                            <p className="text-xs text-slate-500 mt-0.5">Delivery guaranteed within 3 business days</p>
-                        </div>
-                    </div>
-                    <div className="flex items-start gap-3 mt-4">
-                        <RotateCcw size={18} className="text-slate-800 mt-0.5 shrink-0" />
-                        <div>
-                            <p className="font-bold text-slate-800">Return & Refund Policy</p>
-                            <p className="text-xs text-slate-500 mt-0.5">Free return within 15 days for any reason.</p>
-                        </div>
-                    </div>
-                    <div className="flex items-start gap-3 mt-4">
-                        <ShieldCheck size={18} className="text-slate-800 mt-0.5 shrink-0" />
-                        <div>
-                            <p className="font-bold text-slate-800">Security & Privacy</p>
-                            <p className="text-xs text-slate-500 mt-0.5">Safe payments: We do not share your details.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-          </div>
+                  <div className="pdp-trust-card" style={{ position: "sticky", top: "80px" }}>
+                    <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.375rem" }}>Review this product</h3>
+                    <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)", marginBottom: "1.25rem" }}>Share your thoughts with other customers</p>
 
-        </div>
-
-        {/* --- SCROLLING TAB INTERFACE --- */}
-        <div className="mt-16 bg-white shrink-0">
-            {/* Tab Header Line */}
-            <div className="flex gap-8 border-b border-slate-200 text-sm uppercase font-bold tracking-wider mb-8 overflow-x-auto">
-                <button 
-                    onClick={() => setActiveTab('reviews')} 
-                    className={`pb-4 whitespace-nowrap border-b-2 transition-all ${activeTab === 'reviews' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                >
-                    Customer Reviews ({reviews.length})
-                </button>
-                <button 
-                    onClick={() => setActiveTab('specifications')} 
-                    className={`pb-4 whitespace-nowrap border-b-2 transition-all ${activeTab === 'specifications' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                >
-                    Specifications
-                </button>
-                <button 
-                    onClick={() => setActiveTab('description')} 
-                    className={`pb-4 whitespace-nowrap border-b-2 transition-all ${activeTab === 'description' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                >
-                    Description
-                </button>
-                <button 
-                    onClick={() => setActiveTab('similar')} 
-                    className={`pb-4 whitespace-nowrap border-b-2 transition-all ${activeTab === 'similar' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                >
-                    Similar Products
-                </button>
-            </div>
-
-            {/* TAB CONTENT: DESCRIPTION */}
-            {activeTab === 'description' && (
-                <div className="max-w-4xl py-4 animation-fadeIn">
-                    <h3 className="text-2xl font-bold text-slate-800 mb-6">Product Overview</h3>
-                    <p className="text-slate-700 leading-relaxed text-lg whitespace-pre-wrap">{product.description}</p>
-                    {/* Mock Marketing Imagery */}
-                    <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-slate-50 rounded-xl aspect-video px-12 py-8 flex flex-col items-center justify-center text-center border border-slate-100">
-                            <ShieldCheck size={48} strokeWidth={1} className="text-red-500 mb-4" />
-                            <h4 className="font-bold text-slate-800 text-xl mb-2">Military Grade Drop Protection</h4>
-                            <p className="text-slate-500 text-sm">Tested to withstand drops from 10ft onto concrete surfaces.</p>
-                        </div>
-                        <div className="bg-slate-50 rounded-xl aspect-video px-12 py-8 flex flex-col items-center justify-center text-center border border-slate-100">
-                            <Star size={48} strokeWidth={1} className="text-red-500 mb-4" />
-                            <h4 className="font-bold text-slate-800 text-xl mb-2">Crystal Clear Hybrid Material</h4>
-                            <p className="text-slate-500 text-sm">Anti-yellowing polymer keeps your device looking pristine for longer.</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* TAB CONTENT: SPECIFICATIONS */}
-            {activeTab === 'specifications' && (
-                <div className="max-w-4xl py-4 animation-fadeIn">
-                    <h3 className="text-xl font-bold text-slate-800 mb-6">Technical Details</h3>
-                    {product.specifications ? (
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
-                            <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{product.specifications}</p>
-                        </div>
+                    {!user ? (
+                      <Link href="/login" className="pdp-secondary-btn" style={{ display: "flex", justifyContent: "center", textDecoration: "none" }}>
+                        Sign in to write review
+                      </Link>
                     ) : (
-                        <div className="border border-slate-200 rounded-xl overflow-hidden">
-                            <table className="w-full text-sm text-left">
-                                <tbody className="divide-y divide-slate-200">
-                                    <tr className="bg-slate-50">
-                                        <td className="px-6 py-4 font-semibold text-slate-600 w-1/3">Item Category</td>
-                                        <td className="px-6 py-4 text-slate-800 capitalize">{product.category}</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="px-6 py-4 font-semibold text-slate-600">Material</td>
-                                        <td className="px-6 py-4 text-slate-800">Premium High-Durability Components</td>
-                                    </tr>
-                                    <tr className="bg-slate-50">
-                                        <td className="px-6 py-4 font-semibold text-slate-600">Features</td>
-                                        <td className="px-6 py-4 text-slate-800 text-sm">Anti-Scratch, Lightweight, Premium Build</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="px-6 py-4 font-semibold text-slate-600">Brand Quality</td>
-                                        <td className="px-6 py-4 text-slate-800">{product.brand || 'NeshStore Verified Original'}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                      <form onSubmit={handleReviewSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                        <div style={{ display: "flex", gap: "0.25rem", justifyContent: "center", marginBottom: "0.5rem" }}>
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <button key={s} type="button" onClick={() => setRating(s)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", transition: "transform 0.15s" }}>
+                              <Star size={28} className={s <= rating ? "fill-amber-400 text-amber-400" : ""} style={s > rating ? { color: "var(--text-muted)" } : {}} />
+                            </button>
+                          ))}
                         </div>
+                        <textarea
+                          className="form-input"
+                          rows={3}
+                          placeholder="What did you like or dislike?"
+                          value={comment}
+                          onChange={e => setComment(e.target.value)}
+                          required
+                          style={{ resize: "vertical" }}
+                        />
+                        <button disabled={reviewMutation.isPending} type="submit" className="btn-primary" style={{ width: "100%", justifyContent: "center", padding: "0.75rem", borderRadius: "0.75rem", fontSize: "0.875rem" }}>
+                          {reviewMutation.isPending ? "Submitting..." : "Submit Review"}
+                        </button>
+                      </form>
                     )}
+                  </div>
                 </div>
-            )}
 
-            {/* TAB CONTENT: REVIEWS */}
-            {activeTab === 'reviews' && (
-                <div className="max-w-5xl py-4 animation-fadeIn">
-                    
-                    <div className="flex flex-col md:flex-row gap-12">
-                        {/* Write Review Column */}
-                        <div className="md:w-1/3">
-                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 sticky top-8">
-                                <h3 className="text-lg font-bold text-slate-900 mb-2">Review this product</h3>
-                                <p className="text-sm text-slate-500 mb-6">Share your thoughts with other customers</p>
-                                
-                                {!user ? (
-                                    <Link href="/login" className="w-full block text-center bg-white border border-slate-300 text-slate-800 font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors">
-                                        Sign in to write review
-                                    </Link>
-                                ) : (
-                                    <form onSubmit={handleReviewSubmit} className="space-y-4">
-                                        <div className="flex gap-1 justify-center mb-4">
-                                            {[1,2,3,4,5].map(s => (
-                                                <button key={s} type="button" onClick={() => setRating(s)} className="hover:scale-110 transition-transform focus:outline-none">
-                                                    <Star size={32} className={s <= rating ? "fill-orange-400 text-orange-400" : "text-slate-300"} />
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <textarea 
-                                            className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:outline-none text-sm" 
-                                            rows="3" 
-                                            placeholder="What did you like or dislike?"
-                                            value={comment}
-                                            onChange={e => setComment(e.target.value)}
-                                            required
-                                        ></textarea>
-                                        <button disabled={reviewMutation.isPending} type="submit" className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 rounded-xl transition-colors disabled:bg-slate-400 text-sm">
-                                            {reviewMutation.isPending ? "Submitting..." : "Submit Review"}
-                                        </button>
-                                    </form>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Read Reviews Column */}
-                        <div className="md:w-2/3">
-                            <div className="flex items-center gap-4 mb-8 pb-4 border-b border-slate-100">
-                                <div className="text-5xl font-black text-slate-900">{avgRating}</div>
-                                <div>
-                                    <div className="flex items-center gap-1 mb-1">
-                                        {[1,2,3,4,5].map(s => (
-                                            <Star key={s} size={18} className={s <= Math.round(Number(avgRating)) ? "fill-orange-400 text-orange-400" : "text-slate-200"} />
-                                        ))}
-                                    </div>
-                                    <p className="text-sm text-slate-500">{reviews.length} product ratings</p>
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-6">
-                                {reviews.length === 0 ? (
-                                    <div className="text-center py-12 text-slate-400">
-                                        <MessageSquare size={48} strokeWidth={1} className="mx-auto mb-4 opacity-50" />
-                                        <p>No reviews yet. Be the first to share your experience!</p>
-                                    </div>
-                                ) : (
-                                    reviews.map(review => (
-                                        <div key={review.id} className="border-b border-slate-100 pb-6 last:border-0 last:pb-0 group">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="w-10 h-10 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center font-bold text-slate-600 shadow-inner">
-                                                    {(review.profiles?.full_name || "A").charAt(0).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                                        {review.profiles?.full_name || "Verified Customer"}
-                                                        {review.profiles?.role === 'admin' && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Staff</span>}
-                                                    </p>
-                                                    <div className="flex items-center gap-2 mt-0.5">
-                                                        <div className="flex">
-                                                            {[...Array(5)].map((_, i) => (
-                                                                <Star key={i} size={12} className={i < review.rating ? "fill-orange-400 text-orange-400" : "text-slate-200"} />
-                                                            ))}
-                                                        </div>
-                                                        <span className="text-[11px] text-slate-400">{new Date(review.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="pl-12">
-                                                <p className="text-slate-700 text-sm leading-relaxed mb-3">
-                                                    {review.comment}
-                                                </p>
-                                                <div className="flex items-center gap-4 mt-2">
-                                                    <button className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors">
-                                                        <ThumbsUp size={14} /> Helpful (0)
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            )}
-
-            {/* TAB CONTENT: SIMILAR PRODUCTS */}
-            {activeTab === 'similar' && (
-                <div className="py-4 animation-fadeIn">
-                    <h3 className="text-xl font-bold text-slate-800 mb-6">You may also like</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-20">
-                        {similarProducts.filter(p => p.id !== product.id).slice(0, 5).map(item => (
-                            <Link key={item.id} href={`/product/${item.id}`} className="block bg-white border border-slate-100 rounded-xl overflow-hidden hover:shadow-md hover:border-red-200 transition-all group">
-                                <div className="aspect-square bg-slate-50 overflow-hidden p-4 flex items-center justify-center relative">
-                                    <img src={item.image_url} alt={item.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
-                                    {item.discount_percentage > 0 && (
-                                        <div className="absolute top-2 right-2 bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full">
-                                            -{Math.round(item.discount_percentage)}%
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="p-3 bg-white">
-                                    <h4 className="text-xs font-semibold text-slate-700 line-clamp-2 mb-1">{item.name}</h4>
-                                    <p className="text-sm font-black text-red-600">Ksh {item.price}</p>
-                                </div>
-                            </Link>
+                {/* Read Reviews */}
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem", paddingBottom: "1rem", borderBottom: "1px solid var(--border-color)" }}>
+                    <div style={{ fontSize: "2.5rem", fontWeight: 900, color: "var(--text-primary)" }}>{avgRating}</div>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", marginBottom: "0.25rem" }}>
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <Star key={s} size={16} className={s <= Math.round(Number(avgRating)) ? "fill-amber-400 text-amber-400" : ""} style={s > Math.round(Number(avgRating)) ? { color: "var(--border-color)" } : {}} />
                         ))}
-                        {similarProducts.filter(p => p.id !== product.id).length === 0 && (
-                            <div className="col-span-full text-slate-400 italic">No similar products available.</div>
-                        )}
+                      </div>
+                      <p style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>{reviews.length} ratings</p>
                     </div>
-                </div>
-            )}
-        </div>
+                  </div>
 
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                    {reviews.length === 0 ? (
+                      <div style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
+                        <MessageSquare size={48} strokeWidth={1} style={{ margin: "0 auto 1rem", opacity: 0.4 }} />
+                        <p>No reviews yet. Be the first to share your experience!</p>
+                      </div>
+                    ) : (
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      reviews.map((review: any) => (
+                        <div key={review.id} style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "1.25rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.625rem" }}>
+                            <div style={{
+                              width: "36px", height: "36px", borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center",
+                              background: "var(--bg-secondary)", fontWeight: 700, color: "var(--text-secondary)", fontSize: "0.8125rem"
+                            }}>
+                              {(review.profiles?.full_name || "A").charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.8125rem", display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                                {review.profiles?.full_name || "Verified Customer"}
+                                {review.profiles?.role === 'admin' && <span style={{ background: "var(--accent)", color: "#fff", fontSize: "0.5625rem", padding: "0.125rem 0.375rem", borderRadius: "0.25rem", textTransform: "uppercase", fontWeight: 700 }}>Staff</span>}
+                              </p>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.125rem" }}>
+                                <div style={{ display: "flex" }}>
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star key={i} size={11} className={i < review.rating ? "fill-amber-400 text-amber-400" : ""} style={i >= review.rating ? { color: "var(--border-color)" } : {}} />
+                                  ))}
+                                </div>
+                                <span style={{ fontSize: "0.6875rem", color: "var(--text-muted)" }}>{new Date(review.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <p style={{ color: "var(--text-secondary)", fontSize: "0.8125rem", lineHeight: 1.7, paddingLeft: "2.75rem" }}>{review.comment}</p>
+                          <div style={{ paddingLeft: "2.75rem", marginTop: "0.5rem" }}>
+                            <button style={{ display: "flex", alignItems: "center", gap: "0.375rem", fontSize: "0.6875rem", fontWeight: 600, color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer" }}>
+                              <ThumbsUp size={12} /> Helpful (0)
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Similar Products */}
+          {activeTab === 'similar' && (
+            <div className="animation-fadeIn" style={{ padding: "1.5rem 0 3rem" }}>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "1.25rem" }}>You may also like</h3>
+              <div className="product-grid">
+                {similarProducts.filter((p: { id: string }) => p.id !== product.id).slice(0, 4).map((item: { id: string; [key: string]: unknown }) => (
+                  <ProductCard key={item.id} product={item as Parameters<typeof ProductCard>[0]['product']} />
+                ))}
+                {similarProducts.filter((p: { id: string }) => p.id !== product.id).length === 0 && (
+                  <div style={{ gridColumn: "1 / -1", color: "var(--text-muted)", fontStyle: "italic" }}>No similar products available.</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-};
-
-
-
+}

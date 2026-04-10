@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { LogIn } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -27,7 +28,7 @@ export default function LoginPage() {
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", authData.user.id).single();
     if (profile?.role === "admin" || profile?.role === "salesperson") {
       await supabase.auth.signOut();
-      toast.error("SECURITY HALT: Staff and Executive accounts must authenticate via secure internal routing.");
+      toast.error("Staff accounts must authenticate via secure internal routing.");
       setLoading(false);
       return;
     }
@@ -38,25 +39,25 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="container mx-auto py-12 flex justify-center items-center min-h-[70vh]">
-      <div className="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] w-full max-w-md border border-gray-100 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 to-red-600"></div>
-        <h1 className="text-3xl font-extrabold text-[#111] mb-2 text-center mt-2">Sign In</h1>
-        <p className="text-gray-500 text-center mb-8">Access your NeshStore account</p>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h1 className="auth-title">Welcome back</h1>
+        <p className="auth-subtitle">Sign in to your NeshStore account</p>
         <form onSubmit={handleLogin} className="flex flex-col gap-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
-            <input type="email" required className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-gray-50/50 text-[#111]" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label className="form-label">Email Address</label>
+            <input type="email" required className="form-input" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-            <input type="password" required className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-gray-50/50 text-[#111]" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <label className="form-label">Password</label>
+            <input type="password" required className="form-input" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          <button type="submit" disabled={loading} className="mt-2 w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3.5 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed">
-            {loading ? "Entering secure portal..." : "Log in securely"}
+          <button type="submit" disabled={loading} className="btn-primary w-full justify-center py-3.5 mt-2 text-base" style={{ borderRadius: "0.75rem" }}>
+            <LogIn size={18} /> {loading ? "Signing in..." : "Sign In"}
           </button>
-          <p className="text-center text-sm text-gray-500 mt-4">
-            Don&apos;t have an account? <Link href="/signup" className="text-red-500 font-semibold hover:underline">Create one</Link>
+          <p className="text-center text-sm" style={{ color: "var(--text-muted)" }}>
+            Don&apos;t have an account?{" "}
+            <Link href="/signup" className="font-semibold hover:underline" style={{ color: "var(--accent)" }}>Create one</Link>
           </p>
         </form>
       </div>

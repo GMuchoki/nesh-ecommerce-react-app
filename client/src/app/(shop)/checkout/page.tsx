@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { verifyPaystackPayment } from "@/lib/api";
-import { ShoppingBag, CheckCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import { ShoppingBag, CheckCircle, ArrowRight, ShieldCheck, CreditCard, Lock } from "lucide-react";
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -22,7 +22,6 @@ export default function CheckoutPage() {
   const handleCheckoutBackend = async (reference: string) => {
     setProcessing(true);
     try {
-      // Server calculates the REAL total from the database — no totalAmount from client
       await verifyPaystackPayment({
         reference,
         guestEmail,
@@ -32,7 +31,7 @@ export default function CheckoutPage() {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setSuccess(true);
       clearCart();
-      toast.success("Order fully secured! 🎉 Redirecting...", { duration: 4000 });
+      toast.success("Order confirmed! Redirecting...", { duration: 4000 });
       setTimeout(() => { router.push(user ? "/dashboard" : "/"); }, 3500);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An unexpected problem occurred";
@@ -53,10 +52,10 @@ export default function CheckoutPage() {
   }, []);
 
   const triggerPayment = () => {
-    if (!guestEmail.includes("@")) return toast.warning("Please enter a valid email address for your receipt.");
+    if (!guestEmail.includes("@")) return toast.warning("Please enter a valid email for your receipt.");
     if (cart.length === 0) return toast.warning("Your cart is empty.");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(window as any).PaystackPop) return toast.error("Payment gateway is loading, please wait a second...");
+    if (!(window as any).PaystackPop) return toast.error("Payment gateway loading, please wait...");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = (window as any).PaystackPop.setup({
       key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
@@ -66,83 +65,102 @@ export default function CheckoutPage() {
       reference: new Date().getTime().toString(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       callback: function (response: any) {
-        toast.success("Payment Received! Finalizing order on the server...");
+        toast.success("Payment received! Verifying...");
         handleCheckoutBackend(response.reference);
       },
       onClose: function () {
-        toast.error("Payment window closed. Order not fully completed.");
+        toast.error("Payment cancelled.");
       },
     });
     handler.openIframe();
   };
 
+  // Empty cart state
   if (cart.length === 0 && !success) {
     return (
-      <div className="container min-h-[60vh] flex flex-col items-center justify-center gap-6 text-center">
-        <div className="bg-slate-100 p-6 rounded-full inline-block text-slate-400"><ShoppingBag size={48} strokeWidth={1} /></div>
+      <div className="container" style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.5rem", textAlign: "center" }}>
+        <div style={{ background: "var(--bg-secondary)", padding: "1.5rem", borderRadius: "9999px", color: "var(--text-muted)" }}><ShoppingBag size={48} strokeWidth={1.5} /></div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Your cart is empty</h2>
-          <p className="text-slate-500 max-w-md">Looks like you haven&apos;t added anything to your cart yet. Discover our premium collection!</p>
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Your cart is empty</h2>
+          <p style={{ color: "var(--text-muted)", maxWidth: "360px" }}>Add items to your cart first.</p>
         </div>
-        <button className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-full shadow-md shadow-red-500/20 transition-all flex items-center gap-2" onClick={() => router.push("/")}>
-          Start Shopping <ArrowRight size={18} />
+        <button onClick={() => router.push("/")} className="btn-primary" style={{ padding: "0.75rem 2rem" }}>
+          Start Shopping <ArrowRight size={16} />
         </button>
       </div>
     );
   }
 
+  // Success state
   if (success) {
     return (
-      <div className="container min-h-[60vh] flex flex-col items-center justify-center gap-6 text-center">
-        <div className="text-green-500 mb-2"><CheckCircle size={80} strokeWidth={1.5} /></div>
+      <div className="container" style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "1.5rem", textAlign: "center" }}>
+        <CheckCircle size={72} strokeWidth={1.5} style={{ color: "#22c55e" }} />
         <div>
-          <h2 className="text-3xl font-bold text-slate-800 mb-2">Order Confirmed!</h2>
-          <p className="text-slate-500 mb-6 max-w-md">Your secure payment was completely processed. We&apos;ve sent a digital receipt to <span className="font-semibold text-slate-700">{guestEmail}</span>.</p>
+          <h2 style={{ fontSize: "1.75rem", fontWeight: 900, color: "var(--text-primary)", marginBottom: "0.5rem" }}>Order Confirmed!</h2>
+          <p style={{ color: "var(--text-muted)", maxWidth: "400px" }}>Your payment was processed. A receipt has been sent to <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{guestEmail}</span>.</p>
         </div>
-        <div className="flex gap-4">
-          {user && <button className="bg-slate-900 border border-slate-900 text-white px-6 py-3 rounded-full font-semibold hover:bg-black transition-colors" onClick={() => router.push("/dashboard")}>View Orders</button>}
-          <button className="bg-white border border-slate-200 text-slate-700 px-6 py-3 rounded-full font-semibold hover:bg-slate-50 transition-colors" onClick={() => router.push("/")}>Continue Shopping</button>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          {user && <button className="btn-primary" onClick={() => router.push("/dashboard")} style={{ padding: "0.625rem 1.5rem" }}>View Orders</button>}
+          <button onClick={() => router.push("/")} style={{
+            padding: "0.625rem 1.5rem", borderRadius: "9999px", border: "1px solid var(--border-color)",
+            background: "var(--bg-card)", color: "var(--text-secondary)", fontWeight: 600, cursor: "pointer", fontSize: "0.875rem"
+          }}>Continue Shopping</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container py-12 max-w-4xl">
-      <h2 className="text-3xl font-bold text-slate-900 mb-8 border-b pb-4">Secure Checkout</h2>
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="flex-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Order Summary</h3>
-          <div className="space-y-4 mb-6">
+    <div className="container" style={{ paddingTop: "2rem", paddingBottom: "4rem", maxWidth: "960px" }}>
+      <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: "2rem" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><Lock size={20} /> Secure Checkout</span>
+      </h1>
+
+      <div className="checkout-layout">
+        {/* Order Summary */}
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "1rem", padding: "1.5rem", boxShadow: "var(--card-shadow)" }}>
+          <h3 style={{ fontWeight: 700, color: "var(--text-primary)", marginBottom: "1.25rem", fontSize: "1rem" }}>Order Summary</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem" }}>
             {cart.map((item) => (
-              <div key={item.id} className="flex justify-between items-center text-slate-600">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-slate-100 rounded-md overflow-hidden shrink-0 hidden sm:block">
-                    {item.image_url && <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />}
+              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <div style={{ width: "44px", height: "44px", borderRadius: "0.5rem", overflow: "hidden", background: "var(--bg-secondary)", flexShrink: 0 }}>
+                    {item.image_url && <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                   </div>
-                  <span className="font-medium text-slate-700">{item.name || item.title}</span>
-                  <span className="text-xs text-slate-400 bg-slate-100 px-2 rounded-md">Qty: {item.qty}</span>
+                  <div>
+                    <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.8125rem" }}>{item.name || item.title}</span>
+                    <span style={{ display: "block", fontSize: "0.6875rem", color: "var(--text-muted)" }}>Qty: {item.qty}</span>
+                  </div>
                 </div>
-                <span className="font-semibold">Ksh {(item.price * item.qty).toFixed(2)}</span>
+                <span style={{ fontWeight: 700, color: "var(--text-primary)", fontSize: "0.875rem" }}>Ksh {(item.price * item.qty).toLocaleString()}</span>
               </div>
             ))}
           </div>
-          <div className="border-t border-slate-100 pt-4 flex justify-between items-center">
-            <span className="text-slate-500">Subtotal</span>
-            <span className="text-2xl font-bold text-slate-900">Ksh {totalPrice.toFixed(2)}</span>
+          <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "1rem", display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontWeight: 600, color: "var(--text-secondary)" }}>Total</span>
+            <span style={{ fontSize: "1.375rem", fontWeight: 900, color: "var(--accent)" }}>Ksh {totalPrice.toLocaleString()}</span>
           </div>
         </div>
-        <div className="flex-1 bg-slate-50 p-6 rounded-2xl border border-slate-200 h-fit">
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Contact Email</label>
-            <input type="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="Enter email for receipt" className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 bg-white placeholder-slate-400" disabled={!!user} />
-            {user && <p className="text-xs text-slate-500 mt-2">Using the primary email address for your account.</p>}
+
+        {/* Payment */}
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "1rem", padding: "1.5rem", boxShadow: "var(--card-shadow)", height: "fit-content" }}>
+          <h3 style={{ fontWeight: 700, color: "var(--text-primary)", marginBottom: "1.25rem", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <CreditCard size={18} /> Payment
+          </h3>
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label className="form-label">Email for Receipt</label>
+            <input type="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="you@example.com" className="form-input" disabled={!!user} />
+            {user && <p style={{ color: "var(--text-muted)", fontSize: "0.6875rem", marginTop: "0.375rem" }}>Using your account email.</p>}
           </div>
-          <button onClick={triggerPayment} disabled={processing || cart.length === 0} className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-500/30 text-lg">
-            {processing ? "Processing Server..." : `Pay Ksh ${totalPrice.toFixed(2)}`}
+          <button onClick={triggerPayment} disabled={processing || cart.length === 0} className="btn-primary" style={{
+            width: "100%", justifyContent: "center", padding: "0.875rem", borderRadius: "0.75rem", fontSize: "1rem",
+            opacity: processing ? 0.6 : 1, cursor: processing ? "not-allowed" : "pointer"
+          }}>
+            {processing ? "Processing..." : `Pay Ksh ${totalPrice.toLocaleString()}`}
           </button>
-          <p className="text-center text-xs text-slate-400 mt-4 flex items-center justify-center gap-1">
-            <ShieldCheck size={14} className="text-green-500" /> Secured by Paystack
+          <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "0.6875rem", marginTop: "1rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.375rem" }}>
+            <ShieldCheck size={14} style={{ color: "#22c55e" }} /> Secured by Paystack · SSL Encrypted
           </p>
         </div>
       </div>

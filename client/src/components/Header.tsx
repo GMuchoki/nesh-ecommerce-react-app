@@ -3,40 +3,58 @@
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { useState } from "react";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, ShoppingBag, Heart, Sun, Moon, Search } from "lucide-react";
 
 export default function Header() {
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header className="site-header">
-      <div className="header-innner container">
-        <Link href="/" className="brand">NeshStore</Link>
-        <button className="menu-toggle sm:hidden p-2 text-red-500" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
-          {menuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-        <nav className={`header-nav ${menuOpen ? "flex" : "hidden"} sm:flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 w-full sm:w-auto mt-3 sm:mt-0`}>
+      <div className="header-inner">
+        <Link href="/" className="brand">
+          Nesh<span className="brand-dot">.</span>Store
+        </Link>
+
+        {/* Desktop Nav */}
+        <nav className={`header-nav ${menuOpen ? "flex" : "hidden"} sm:flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-1 w-full sm:w-auto mt-3 sm:mt-0`}>
           <Link href="/" onClick={() => setMenuOpen(false)}>Home</Link>
-          <Link href="/wishlist" onClick={() => setMenuOpen(false)}>Wishlist</Link>
-          <Link href="/cart" onClick={() => setMenuOpen(false)}>Cart ({itemCount})</Link>
+          <Link href="/wishlist" onClick={() => setMenuOpen(false)} className="nav-icon-btn relative">
+            <Heart size={18} />
+          </Link>
+          <Link href="/cart" onClick={() => setMenuOpen(false)} className="nav-icon-btn relative">
+            <ShoppingBag size={18} />
+            {itemCount > 0 && <span className="nav-badge">{itemCount}</span>}
+          </Link>
+
+          <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme">
+            {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
+
           {user ? (
             <>
-              <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="flex items-center gap-1 font-medium text-slate-800 hover:text-red-500 transition-colors mx-0 sm:ml-2">
-                <User size={16} /> My Account
+              <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="flex items-center gap-1.5">
+                <User size={15} /> Account
               </Link>
-              <button onClick={() => { logout(); setMenuOpen(false); }} className="flex items-center gap-1 text-gray-600 hover:text-red-500 transition-colors mx-0 px-0 bg-transparent border-0 font-medium">
-                <LogOut size={16} /> Logout
+              <button onClick={() => { logout(); setMenuOpen(false); }} className="flex items-center gap-1.5">
+                <LogOut size={15} /> Logout
               </button>
             </>
           ) : (
-            <Link href="/login" onClick={() => setMenuOpen(false)} className="flex items-center gap-1 bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors text-sm font-semibold !text-white hover:!text-white border-0 shadow-sm ml-0 sm:ml-2">
-              <User size={16} /> Sign In
+            <Link href="/login" onClick={() => setMenuOpen(false)} className="btn-primary ml-1">
+              <User size={15} /> Sign In
             </Link>
           )}
         </nav>
+
+        {/* Mobile Hamburger */}
+        <button className="sm:hidden p-2 text-current" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu" style={{ background: "none", border: "none" }}>
+          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
     </header>
   );
