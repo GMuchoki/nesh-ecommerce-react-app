@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -6,10 +6,10 @@ import { getSalesTeam, createSalesStaff } from '@/lib/api';
 import { toast } from 'sonner';
 import { Plus, UserCheck, DollarSign } from 'lucide-react';
 
-export default function TeamTab({ orders = [] }) {
+export default function TeamTab({ orders = [] }: { orders?: any[] }) {
     const queryClient = useQueryClient();
     const [isAdding, setIsAdding] = useState(false);
-    const [newStaff, setNewStaff] = useState({ fullName: '', email: '', password: '' });
+    const [newStaff, setNewStaff] = useState<any>({ fullName: '', email: '', password: '' });
 
     const { data: team = [], isLoading } = useQuery({
         queryKey: ['sales_team'],
@@ -27,15 +27,15 @@ export default function TeamTab({ orders = [] }) {
         onError: (err) => toast.error(err.message)
     });
 
-    const handleAddStaff = (e) => {
+    const handleAddStaff = (e: any) => {
         e.preventDefault();
         createMutation.mutate(newStaff);
     };
 
     // Calculate Commissions locally using mathematical tracking
-    const computeCommission = (agentId) => {
-        const agentOrders = orders.filter(o => o.sales_person_id === agentId);
-        const totalRevenue = agentOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+    const computeCommission = (agentId: any) => {
+        const agentOrders = orders.filter((o: any) => o.sales_person_id === agentId);
+        const totalRevenue = agentOrders.reduce((sum: any, o: any) => sum + (o.total_amount || 0), 0);
         const commission = totalRevenue * 0.05; // 5% Cut
         return { totalRevenue, commission };
     };
@@ -78,9 +78,9 @@ export default function TeamTab({ orders = [] }) {
                                 value={newStaff.password} onChange={e => setNewStaff({ ...newStaff, password: e.target.value })}
                                 className="w-full p-2.5 border border-slate-300 rounded-lg" placeholder="******" />
                         </div>
-                        <button type="submit" disabled={createMutation.isLoading}
+                        <button type="submit" disabled={createMutation.isPending}
                             className="bg-slate-900 border border-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-6 rounded-lg disabled:opacity-50 h-[42px]">
-                            {createMutation.isLoading ? 'Provisioning Vault...' : 'Provision Secure ID'}
+                            {createMutation.isPending ? 'Provisioning Vault...' : 'Provision Secure ID'}
                         </button>
                     </form>
                 </div>
@@ -98,10 +98,10 @@ export default function TeamTab({ orders = [] }) {
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-sm">
                         {isLoading ? (
-                            <tr><td colSpan="4" className="p-8 text-center text-slate-400">Loading Staff Ledger...</td></tr>
+                            <tr><td colSpan={4} className="p-8 text-center text-slate-400">Loading Staff Ledger...</td></tr>
                         ) : team.length === 0 ? (
-                            <tr><td colSpan="4" className="p-8 text-center text-slate-400">No sales agents exist in the corporate ledger.</td></tr>
-                        ) : team.map(agent => {
+                            <tr><td colSpan={4} className="p-8 text-center text-slate-400">No sales agents exist in the corporate ledger.</td></tr>
+                        ) : team.map((agent: any) => {
                             const { totalRevenue, commission } = computeCommission(agent.id);
                             return (
                                 <tr key={agent.id} className="hover:bg-slate-50 transition-colors">

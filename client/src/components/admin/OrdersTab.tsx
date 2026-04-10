@@ -1,15 +1,15 @@
-﻿"use client";
+"use client";
 
 import React from 'react';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateOrderStatus } from "@/lib/api";
 import { toast } from "sonner";
 
-export default function OrdersTab({ orders = [], isLoading }) {
+export default function OrdersTab({ orders = [], isLoading }: { orders?: any[], isLoading?: boolean }) {
     const queryClient = useQueryClient();
     
     const statusMutation = useMutation({
-        mutationFn: ({ id, status }) => updateOrderStatus(id, status),
+        mutationFn: ({ id, status }: any) => updateOrderStatus(id, status),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin_orders'] });
             toast.success("Order status updated!");
@@ -20,7 +20,7 @@ export default function OrdersTab({ orders = [], isLoading }) {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animation-fadeIn">
             <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                 <h2 className="font-bold text-slate-800">Fulfillment Pipeline</h2>
-                <span className="text-sm text-slate-500">{orders.filter(o => o.status === 'pending').length} Actions Required</span>
+                <span className="text-sm text-slate-500">{orders.filter((o: any) => o.status === 'pending').length} Actions Required</span>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -35,8 +35,8 @@ export default function OrdersTab({ orders = [], isLoading }) {
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-sm">
                         {isLoading ? (
-                            <tr><td colSpan="5" className="p-8 text-center text-slate-400">Loading pipeline...</td></tr>
-                        ) : orders.map(order => (
+                            <tr><td colSpan={5} className="p-8 text-center text-slate-400">Loading pipeline...</td></tr>
+                        ) : orders.map((order: any) => (
                             <tr key={order.id} className="hover:bg-slate-50 transition-colors">
                                 <td className="p-4 text-slate-600 font-medium">
                                     {new Date(order.created_at).toLocaleString()}
@@ -71,7 +71,7 @@ export default function OrdersTab({ orders = [], isLoading }) {
                                 </td>
                             </tr>
                         ))}
-                        {orders.length === 0 && !isLoading && <tr><td colSpan="5" className="p-8 text-center text-slate-400">No orders to fulfill.</td></tr>}
+                        {orders.length === 0 && !isLoading && <tr><td colSpan={5} className="p-8 text-center text-slate-400">No orders to fulfill.</td></tr>}
                     </tbody>
                 </table>
             </div>

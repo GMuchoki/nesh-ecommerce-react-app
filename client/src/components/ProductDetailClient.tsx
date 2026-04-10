@@ -72,12 +72,12 @@ export default function ProductDetailPage() {
   if (isError || !product) return <div className="container" style={{ padding: "5rem 1.5rem", textAlign: "center", color: "var(--text-muted)" }}>Product not found.</div>;
 
   const handleAdd = () => {
-    addToCart({ id: product.id, title: product.name, price: activePrice, thumbnail: activeImage, variant: selectedVariant?.name || null }, Number(qty));
+    addToCart({ id: product.id, title: product.name, price: activePrice, thumbnail: activeImage, variant: selectedVariant?.name || null, qty: Number(qty) });
     router.push('/cart');
   };
 
   const handleBuyNow = () => {
-    addToCart({ id: product.id, title: product.name, price: activePrice, thumbnail: activeImage, variant: selectedVariant?.name || null }, Number(qty));
+    addToCart({ id: product.id, title: product.name, price: activePrice, thumbnail: activeImage, variant: selectedVariant?.name || null, qty: Number(qty) });
     router.push('/checkout');
   };
 

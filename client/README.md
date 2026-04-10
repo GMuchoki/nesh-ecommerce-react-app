@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NeshStore — Premium E-Commerce Platform
 
-## Getting Started
+NeshStore is a modern, high-performance e-commerce platform built with Next.js 15, React seamlessly integrated with Supabase and featuring a premium, glassmorphism-inspired design system. It includes a user-facing retail storefront and secure enterprise modules (Admin Dashboard and POS Terminal).
 
-First, run the development server:
+## 🚀 Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Storefront
+- **Premium UI/UX:** Built with a custom, theme-aware CSS variable system supporting automatic Light and Dark modes. Features rich micro-animations, blur-backdrop navbars, and modern layout conventions.
+- **Product Discovery:** Advanced product browsing, high-quality image galleries, and detailed product specifications.
+- **Seamless Cart & Checkout:** Real-time cart state management using React Context. Fast and secure checkout powered by server-side verification.
+- **Payment Integrations:** 
+  - M-Pesa STK Push (via Safaricom Daraja API)
+  - Paystack (Card Payments)
+- **Wishlist & User Accounts:** Secure user authentication with Supabase to manage orders and saved products.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Secure Backend (Route Handlers)
+All sensitive business logic is safely executed server-side via Next.js Route Handlers (`/app/api/...`), completely replacing the need for a separate legacy Express server:
+- `api/verify-payment`: Securely validates cart totals against the database to prevent client-side price tampering before initializing Paystack transactions.
+- `api/mpesa/push`: Direct integration with Safaricom Daraja API.
+- `api/admin/*`: Enterprise provisioning and reporting modules secured by Supabase Service Roles.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Enterprise Modules
+- **Admin Command Center:** Real-time analytics, inventory matrix, order fulfillment hub, and CRM database.
+- **POS Terminal:** A specialized iPad-optimized view for physical store salespeople to process walk-in orders.
+- *Note:* Access is strictly guarded by role-based Row Level Security (RLS) policies.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Tech Stack
 
-## Learn More
+- **Framework:** [Next.js 15](https://nextjs.org) (App Router)
+- **Language:** TypeScript
+- **Styling:** Custom CSS with robust CSS variables + Tailwindcss typography classes (`app/globals.css`)
+- **Database & Auth:** [Supabase](https://supabase.com) (PostgreSQL + GoTrue Auth)
+- **State Management:** React Context (`CartContext`, `AuthContext`, `ThemeContext`, `WishlistContext`) + React Query (`@tanstack/react-query`)
+- **Icons:** Lucide React
 
-To learn more about Next.js, take a look at the following resources:
+## ⚙️ Local Development setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Environment Variables:**
+   Create a `.env.local` file in the root directory and configure the following variables:
+   ```env
+   # Public Variables (Client-safe)
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-## Deploy on Vercel
+   # Secret Variables (Server-only)
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   PAYSTACK_SECRET_KEY=your_paystack_secret
+   
+   # Optional: Secret App Routes
+   NEXT_PUBLIC_ADMIN_SECRET_ROUTE=red-command-center-x9
+   NEXT_PUBLIC_POS_SECRET_ROUTE=nexus-pos-terminal
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📐 Architecture Notes
+
+- **Theme Persistence:** Theme preference is stored in `localStorage` ensuring an uninterrupted experience.
+- **Route Protection:** Unauthorized users attempting to access enterprise nodes or authenticated paths are automatically intercepted by global context hooks and middlewares.
+- **Optimistic UI:** Uses specialized React Query mutations for fast interactions like leaving product reviews and wishlist management.

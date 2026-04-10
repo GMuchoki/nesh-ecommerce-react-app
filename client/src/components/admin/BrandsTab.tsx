@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -6,16 +6,16 @@ import { insertBrand, updateBrand, deleteBrand } from "@/lib/api";
 import { toast } from "sonner";
 import { Search, Tags, Edit2, Trash2, Plus, X } from "lucide-react";
 
-export default function BrandsTab({ brands = [], isLoading }) {
+export default function BrandsTab({ brands = [], isLoading }: { brands?: any[], isLoading?: boolean }) {
     const queryClient = useQueryClient();
     const [search, setSearch] = useState("");
     
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [newBrand, setNewBrand] = useState({ name: "", description: "" });
+    const [newBrand, setNewBrand] = useState<any>({ name: "", description: "" });
 
     const saveMutation = useMutation({
-        mutationFn: async (brandToSave) => {
+        mutationFn: async (brandToSave: any) => {
             if (editingId) return await updateBrand(editingId, brandToSave);
             return await insertBrand(brandToSave);
         },
@@ -36,18 +36,18 @@ export default function BrandsTab({ brands = [], isLoading }) {
         onError: () => toast.error("Failed to delete brand.")
     });
 
-    const handleSaveBrand = async (e) => {
+    const handleSaveBrand = async (e: any) => {
         e.preventDefault();
         saveMutation.mutate(newBrand);
     };
 
-    const handleEditClick = (brand) => {
+    const handleEditClick = (brand: any) => {
         setEditingId(brand.id);
         setNewBrand({ name: brand.name || "", description: brand.description || "" });
         setIsModalOpen(true);
     };
 
-    const handleDeleteClick = async (id) => {
+    const handleDeleteClick = async (id: any) => {
         if (!window.confirm("Are you sure you want to permanently delete this brand?")) return;
         deleteMutation.mutate(id);
     };
@@ -88,10 +88,10 @@ export default function BrandsTab({ brands = [], isLoading }) {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
-                                <tr><td colSpan="4" className="p-8 text-center text-slate-400">Loading brand database...</td></tr>
-                            ) : brands.filter(b => (b.name || "").toLowerCase().includes(search.toLowerCase())).length === 0 ? (
-                                <tr><td colSpan="4" className="p-8 text-center text-slate-400">No brands found.</td></tr>
-                            ) : brands.filter(b => (b.name || "").toLowerCase().includes(search.toLowerCase())).map(brand => (
+                                <tr><td colSpan={4} className="p-8 text-center text-slate-400">Loading brand database...</td></tr>
+                            ) : brands.filter((b: any) => (b.name || "").toLowerCase().includes(search.toLowerCase())).length === 0 ? (
+                                <tr><td colSpan={4} className="p-8 text-center text-slate-400">No brands found.</td></tr>
+                            ) : brands.filter((b: any) => (b.name || "").toLowerCase().includes(search.toLowerCase())).map((brand: any) => (
                                 <tr key={brand.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="p-4 font-bold text-slate-800">{brand.name}</td>
                                     <td className="p-4 text-slate-500 text-sm max-w-xs truncate">{brand.description || '-'}</td>
@@ -123,7 +123,7 @@ export default function BrandsTab({ brands = [], isLoading }) {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Description (Optional)</label>
-                                    <textarea value={newBrand.description} onChange={e => setNewBrand({...newBrand, description: e.target.value})} rows="3" className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500"></textarea>
+                                    <textarea value={newBrand.description} onChange={e => setNewBrand({...newBrand, description: e.target.value})} rows={3} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500"></textarea>
                                 </div>
                             </form>
                         </div>

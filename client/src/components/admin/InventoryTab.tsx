@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -6,19 +6,19 @@ import { insertProduct, updateProduct, deleteProduct } from "@/lib/api";
 import { toast } from "sonner";
 import { Search, Database, Edit2, Trash2, Plus, X } from "lucide-react";
 
-export default function InventoryTab({ products = [], brands = [], isLoading }) {
+export default function InventoryTab({ products = [], brands = [], isLoading }: { products?: any[], brands?: any[], isLoading?: boolean }) {
     const queryClient = useQueryClient();
     const [search, setSearch] = useState("");
     
     // Modal State scoped strictly to Inventory Tab
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [newProduct, setNewProduct] = useState({
-        name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: "", variants: []
+    const [newProduct, setNewProduct] = useState<any>({
+        name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: "", variants: [] as any[]
     });
 
     const saveMutation = useMutation({
-        mutationFn: async (productToSave) => {
+        mutationFn: async (productToSave: any) => {
             if (editingId) return await updateProduct(editingId, productToSave);
             return await insertProduct(productToSave);
         },
@@ -40,18 +40,18 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
         onError: () => toast.error("Failed to delete product. It might be linked to existing orders.")
     });
 
-    const handleSaveProduct = async (e) => {
+    const handleSaveProduct = async (e: any) => {
         e.preventDefault();
         saveMutation.mutate({
             ...newProduct,
-            price: parseFloat(newProduct.price),
-            stock_quantity: parseInt(newProduct.stock_quantity, 10),
-            discount_percentage: parseFloat(newProduct.discount_percentage) || 0,
-            sales_count: parseInt(newProduct.sales_count, 10) || 0
+            price: parseFloat(String(newProduct.price)),
+            stock_quantity: parseInt(String(newProduct.stock_quantity), 10),
+            discount_percentage: parseFloat(String(newProduct.discount_percentage)) || 0,
+            sales_count: parseInt(String(newProduct.sales_count), 10) || 0
         });
     };
 
-    const handleEditClick = (product) => {
+    const handleEditClick = (product: any) => {
         setEditingId(product.id);
         setNewProduct({
             name: product.name || "", category: product.category || "", price: product.price || "",
@@ -62,19 +62,19 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
         setIsModalOpen(true);
     };
 
-    const handleDeleteClick = async (id) => {
+    const handleDeleteClick = async (id: any) => {
         if (!window.confirm("Are you sure you want to permanently delete this product?")) return;
         deleteMutation.mutate(id);
     };
 
     const handleAddVariant = () => {
-        setNewProduct(prev => ({
+        setNewProduct((prev: any) => ({
             ...prev,
             variants: [...(prev.variants || []), { name: "", price: prev.price || 0, stock_quantity: 0, image_url: "" }]
         }));
     };
 
-    const handleVariantChange = (index, field, value) => {
+    const handleVariantChange = (index: any, field: any, value: any) => {
         const updated = [...(newProduct.variants || [])];
         if (field === 'price') updated[index][field] = parseFloat(value) || 0;
         else if (field === 'stock_quantity') updated[index][field] = parseInt(value, 10) || 0;
@@ -82,8 +82,8 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
         setNewProduct({ ...newProduct, variants: updated });
     };
 
-    const handleRemoveVariant = (index) => {
-        const updated = (newProduct.variants || []).filter((_, i) => i !== index);
+    const handleRemoveVariant = (index: any) => {
+        const updated = (newProduct.variants || []).filter((_: any, i: any) => i !== index);
         setNewProduct({ ...newProduct, variants: updated });
     };
 
@@ -100,7 +100,7 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
                     <button 
                         onClick={() => {
                             setEditingId(null);
-                            setNewProduct({ name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: "", variants: [] });
+                            setNewProduct({ name: "", category: "", price: "", stock_quantity: "", image_url: "", description: "", discount_percentage: 0, sales_count: 0, brand: "", specifications: "", variants: [] as any[] });
                             setIsModalOpen(true);
                         }}
                         className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-transform hover:scale-105 shadow-md shadow-red-600/20 whitespace-nowrap"
@@ -125,10 +125,10 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
-                                <tr><td colSpan="6" className="p-8 text-center text-slate-400">Loading inventory database...</td></tr>
-                            ) : products.filter(p => (p.name || "").toLowerCase().includes(search.toLowerCase())).length === 0 ? (
-                                <tr><td colSpan="6" className="p-8 text-center text-slate-400">No products found.</td></tr>
-                            ) : products.filter(p => (p.name || "").toLowerCase().includes(search.toLowerCase())).map(product => (
+                                <tr><td colSpan={6} className="p-8 text-center text-slate-400">Loading inventory database...</td></tr>
+                            ) : products.filter((p: any) => (p.name || "").toLowerCase().includes(search.toLowerCase())).length === 0 ? (
+                                <tr><td colSpan={6} className="p-8 text-center text-slate-400">No products found.</td></tr>
+                            ) : products.filter((p: any) => (p.name || "").toLowerCase().includes(search.toLowerCase())).map((product: any) => (
                                 <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
@@ -174,15 +174,15 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
                                         <label className="block text-sm font-semibold text-slate-700 mb-1">Brand Name / Manufacturer</label>
                                         <select value={newProduct.brand} onChange={e => setNewProduct({...newProduct, brand: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-white">
                                             <option value="">-- No Brand --</option>
-                                            {brands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
+                                            {brands.map((b: any) => <option key={b.id} value={b.name}>{b.name}</option>)}
                                         </select>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-semibold text-slate-700 mb-1">Price (Ksh) *</label><input required type="number" step="0.01" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div><div><label className="block text-sm font-semibold text-slate-700 mb-1">Initial Stock *</label><input required type="number" value={newProduct.stock_quantity} onChange={e => setNewProduct({...newProduct, stock_quantity: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div></div>
                                 <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-semibold text-slate-700 mb-1">Discount %</label><input type="number" value={newProduct.discount_percentage} onChange={e => setNewProduct({...newProduct, discount_percentage: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div><div><label className="block text-sm font-semibold text-slate-700 mb-1">Total Sales Override (Optional)</label><input type="number" value={newProduct.sales_count} onChange={e => setNewProduct({...newProduct, sales_count: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" placeholder="Use this to spoof startup sales..." /></div></div>
                                 <div><label className="block text-sm font-semibold text-slate-700 mb-1">Image URL</label><input type="url" value={newProduct.image_url} onChange={e => setNewProduct({...newProduct, image_url: e.target.value})} placeholder="https://..." className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" /></div>
-                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Description</label><textarea value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} rows="3" className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500"></textarea></div>
-                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Specifications (Format as bullet points)</label><textarea value={newProduct.specifications} onChange={e => setNewProduct({...newProduct, specifications: e.target.value})} rows="3" className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" placeholder="- Material: Leather&#10;- Weight: 250g&#10;- Warranty: 1 Year"></textarea></div>
+                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Description</label><textarea value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} rows={3} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500"></textarea></div>
+                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Specifications (Format as bullet points)</label><textarea value={newProduct.specifications} onChange={e => setNewProduct({...newProduct, specifications: e.target.value})} rows={3} className="w-full p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-red-500" placeholder="- Material: Leather&#10;- Weight: 250g&#10;- Warranty: 1 Year"></textarea></div>
 
                                 <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
                                     <div className="flex justify-between items-center p-3 border-b border-slate-200 bg-slate-100">
@@ -191,7 +191,7 @@ export default function InventoryTab({ products = [], brands = [], isLoading }) 
                                     </div>
                                     <div className="p-3 space-y-3">
                                         {!(newProduct.variants?.length > 0) && <p className="text-xs text-slate-400 italic text-center py-2">No variants created. Product will be sold as a single standard item.</p>}
-                                        {(newProduct.variants || []).map((v, i) => (
+                                        {(newProduct.variants || []).map((v: any, i: any) => (
                                             <div key={i} className="flex flex-col gap-2 p-3 bg-white border border-slate-200 rounded-lg shadow-sm relative">
                                                 <button type="button" onClick={() => handleRemoveVariant(i)} className="absolute top-2 right-2 text-slate-400 hover:text-red-500"><X size={14}/></button>
                                                 <div className="grid grid-cols-3 gap-2 pr-6">

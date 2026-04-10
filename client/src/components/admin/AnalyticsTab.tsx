@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { DollarSign, ShoppingBag, Users, Package } from "lucide-react";
 
-export default function AnalyticsTab({ orders = [], customers = [], products = [] }) {
-    const totalRevenue = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total_amount || 0), 0);
-    const lowStockItems = products.filter(p => p.stock_quantity < 5);
+export default function AnalyticsTab({ orders = [], customers = [], products = [] }: { orders?: any[], customers?: any[], products?: any[] }) {
+    const totalRevenue = orders.filter((o: any) => o.status !== 'cancelled').reduce((sum: any, o: any) => sum + (o.total_amount || 0), 0);
+    const lowStockItems = products.filter((p: any) => p.stock_quantity < 5);
 
     return (
         <div className="space-y-6 animation-fadeIn">
@@ -64,7 +64,7 @@ export default function AnalyticsTab({ orders = [], customers = [], products = [
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {orders.slice(0, 5).map(order => (
+                            {orders.slice(0, 5).map((order: any) => (
                                 <tr key={order.id}>
                                     <td className="py-4 font-mono text-xs text-slate-400">{order.id.split('-')[0]}...</td>
                                     <td className="py-4 text-slate-700">{new Date(order.created_at).toLocaleDateString()}</td>
@@ -77,7 +77,7 @@ export default function AnalyticsTab({ orders = [], customers = [], products = [
                                     </td>
                                 </tr>
                             ))}
-                            {orders.length === 0 && <tr><td colSpan="5" className="py-8 text-center text-slate-400">No recent orders.</td></tr>}
+                            {orders.length === 0 && <tr><td colSpan={5} className="py-8 text-center text-slate-400">No recent orders.</td></tr>}
                         </tbody>
                     </table>
                 </div>
